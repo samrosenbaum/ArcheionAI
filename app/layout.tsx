@@ -8,9 +8,17 @@ import { ErrorBoundary } from "@/components/error-boundary"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Archeion AI - Intelligent Document Management",
-  description: "AI-powered financial document organization and insights platform",
-    generator: 'v0.app'
+  title: "Archeion - CFO-Level Asset Oversight",
+  description: "Secure digital safe with CFO-level oversight for your assets",
+  generator: 'v0.app',
+  manifest: '/manifest.json',
+  themeColor: '#1e293b',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Archeion'
+  }
 }
 
 export default function RootLayout({

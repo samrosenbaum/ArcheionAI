@@ -1,567 +1,327 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  FileText,
-  TrendingUp,
-  AlertTriangle,
-  DollarSign,
-  Calendar,
-  Upload,
-  Bell,
-  Settings,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Shield,
-  PieChart,
-  CreditCard,
-  Home,
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Logo } from "@/components/logo"
+import { 
+  FileText, 
+  Shield, 
+  TrendingUp, 
+  CreditCard, 
+  Home, 
   Briefcase,
+  ArrowRight,
+  Upload,
   Camera,
   MessageSquare,
+  CheckCircle,
+  Zap,
+  Lock,
+  BarChart3
 } from "lucide-react"
 import Link from "next/link"
-import { PhotoCapture } from "@/components/photo-capture"
-import { isDemoMode } from "@/lib/document-storage"
 
-// Mock data for the dashboard
-const mockCategories = [
-  {
-    id: "tax",
-    name: "Tax Documents",
-    icon: FileText,
-    color: "bg-blue-500",
-    document_count: 12,
-    total_value: 125000,
-    last_updated: "2024-01-15",
-    description: "Tax returns, W-2s, 1099s",
-  },
-  {
-    id: "insurance",
-    name: "Insurance",
-    icon: Shield,
-    color: "bg-green-500",
-    document_count: 8,
-    total_value: 2400,
-    last_updated: "2024-01-10",
-    description: "Auto, home, life insurance policies",
-  },
-  {
-    id: "investments",
-    name: "Investments",
-    icon: TrendingUp,
-    color: "bg-purple-500",
-    document_count: 15,
-    total_value: 450000,
-    last_updated: "2024-01-12",
-    description: "Brokerage statements, 401k, IRA",
-  },
-  {
-    id: "banking",
-    name: "Banking",
-    icon: CreditCard,
-    color: "bg-orange-500",
-    document_count: 24,
-    total_value: 85000,
-    last_updated: "2024-01-14",
-    description: "Bank statements, loan documents",
-  },
-  {
-    id: "real-estate",
-    name: "Real Estate",
-    icon: Home,
-    color: "bg-red-500",
-    document_count: 6,
-    total_value: 750000,
-    last_updated: "2024-01-08",
-    description: "Property deeds, mortgage documents",
-  },
-  {
-    id: "business",
-    name: "Business",
-    icon: Briefcase,
-    color: "bg-indigo-500",
-    document_count: 18,
-    total_value: 320000,
-    last_updated: "2024-01-13",
-    description: "Business filings, contracts, invoices",
-  },
-]
+export default function LandingPage() {
+  const [isLoading, setIsLoading] = useState(false)
 
-const mockInsights = [
-  {
-    id: "1",
-    type: "tax_optimization",
-    title: "Tax Deduction Opportunity",
-    description: "You may be eligible for additional $3,200 in deductions based on your 2024 documents",
-    priority: "high" as const,
-    potential_savings: 3200,
-    confidence: 92,
-    category: "Tax",
-    created_at: "2024-01-15T10:30:00Z",
-  },
-  {
-    id: "2",
-    type: "insurance_gap",
-    title: "Coverage Gap Identified",
-    description: "Your current auto insurance liability limits may be insufficient for your asset level",
-    priority: "high" as const,
-    confidence: 88,
-    category: "Insurance",
-    created_at: "2024-01-14T15:45:00Z",
-  },
-  {
-    id: "3",
-    type: "investment_rebalance",
-    title: "Portfolio Rebalancing Needed",
-    description: "Your asset allocation has drifted 8% from target. Consider rebalancing.",
-    priority: "medium" as const,
-    confidence: 85,
-    category: "Investments",
-    created_at: "2024-01-13T09:15:00Z",
-  },
-  {
-    id: "4",
-    type: "rate_optimization",
-    title: "Better Savings Rate Available",
-    description: "Found savings accounts offering 2.3% higher interest than your current rate",
-    priority: "medium" as const,
-    potential_savings: 1800,
-    confidence: 95,
-    category: "Banking",
-    created_at: "2024-01-12T14:20:00Z",
-  },
-]
-
-const mockRecentActivity = [
-  {
-    id: "1",
-    action: "Document uploaded",
-    document: "2024_Tax_Return_Draft.pdf",
-    category: "Tax",
-    timestamp: "2 hours ago",
-    status: "analyzed",
-  },
-  {
-    id: "2",
-    action: "Insight generated",
-    document: "Auto_Insurance_Policy.pdf",
-    category: "Insurance",
-    timestamp: "5 hours ago",
-    status: "completed",
-  },
-  {
-    id: "3",
-    action: "Document processed",
-    document: "Q4_Investment_Statement.pdf",
-    category: "Investments",
-    timestamp: "1 day ago",
-    status: "analyzed",
-  },
-  {
-    id: "4",
-    action: "SMS document received",
-    document: "Bank_Statement_Photo.jpg",
-    category: "Banking",
-    timestamp: "2 days ago",
-    status: "processing",
-  },
-]
-
-export default function Dashboard() {
-  const [totalDocuments, setTotalDocuments] = useState(0)
-  const [totalInsights, setTotalInsights] = useState(0)
-  const [potentialSavings, setPotentialSavings] = useState(0)
-  const [showPhotoCapture, setShowPhotoCapture] = useState(false)
-
-  useEffect(() => {
-    // Calculate totals from mock data
-    const docCount = mockCategories.reduce((sum, cat) => sum + cat.document_count, 0)
-    const insightCount = mockInsights.length
-    const savings = mockInsights.reduce((sum, insight) => sum + (insight.potential_savings || 0), 0)
-
-    setTotalDocuments(docCount)
-    setTotalInsights(insightCount)
-    setPotentialSavings(savings)
-  }, [])
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800 border-red-200"
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200"
-      case "low":
-        return "bg-green-100 text-green-800 border-green-200"
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200"
+  const features = [
+    {
+      icon: Shield,
+      title: "Digital Safe for Everything You Own",
+      description: "All critical asset documents in one secure, searchable place — titles, deeds, insurance, tax filings, estate docs"
+    },
+    {
+      icon: TrendingUp,
+      title: "Automated Financial Radar",
+      description: "Tracks what's changing and flags what needs attention, giving you proactive oversight of your assets"
+    },
+    {
+      icon: BarChart3,
+      title: "CFO-Style Visibility",
+      description: "The proactive monitoring and optimization a CFO would bring to a company, applied to your personal assets"
+    },
+    {
+      icon: Zap,
+      title: "Intelligent Life Admin",
+      description: "Simply upload documents and let AI organize, track deadlines, and alert you to opportunities or risks"
     }
-  }
+  ]
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "analyzed":
-      case "completed":
-        return "bg-green-100 text-green-800"
-      case "processing":
-        return "bg-blue-100 text-blue-800"
-      case "error":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
+  const categories = [
+    { icon: FileText, name: "Tax & Estate", color: "bg-slate-700" },
+    { icon: Shield, name: "Insurance", color: "bg-slate-700" },
+    { icon: TrendingUp, name: "Investments", color: "bg-slate-700" },
+    { icon: CreditCard, name: "Banking", color: "bg-slate-700" },
+    { icon: Home, name: "Real Estate", color: "bg-slate-700" },
+    { icon: Briefcase, name: "Business", color: "bg-slate-700" }
+  ]
+
+  const stats = [
+    { number: "99.9%", label: "Uptime" },
+    { number: "256-bit", label: "Encryption" },
+    { number: "24/7", label: "Monitoring" },
+    { number: "SOC 2", label: "Compliant" }
+  ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <header className="bg-white/95 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
+            <Logo size="lg" />
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <PieChart className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-xl font-bold text-gray-900">Archeion AI</h1>
-                {isDemoMode && (
-                  <Badge variant="outline" className="text-xs">
-                    Demo Mode
-                  </Badge>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPhotoCapture(true)}
-                className="hidden sm:flex items-center space-x-2"
-              >
-                <Camera className="w-4 h-4" />
-                <span>Quick Capture</span>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Sign In</Link>
               </Button>
-
-              <Button variant="outline" size="sm" className="hidden sm:flex items-center space-x-2 bg-transparent">
-                <MessageSquare className="w-4 h-4" />
-                <span>SMS Upload</span>
+              <Button asChild className="bg-slate-900 hover:bg-slate-800">
+                <Link href="/signup">Get Started</Link>
               </Button>
-
-              <Button variant="outline" size="sm">
-                <Bell className="w-4 h-4" />
-              </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/placeholder-user.jpg" alt="User" />
-                      <AvatarFallback>JD</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">John Doe</p>
-                      <p className="text-xs leading-none text-muted-foreground">john@example.com</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalDocuments}</div>
-              <p className="text-xs text-muted-foreground">+12% from last month</p>
-            </CardContent>
-          </Card>
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50" />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23e2e8f0%22%20fill-opacity%3D%220.4%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
+        
+        <div className="relative max-w-7xl mx-auto text-center">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-medium mb-8">
+            <Lock className="w-4 h-4 mr-2" />
+            Enterprise-Grade Security
+          </div>
+          
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-900 mb-8 leading-tight">
+            CFO-Level Oversight for
+            <span className="block text-slate-600"> Your Life Admin</span>
+          </h1>
+          
+          <p className="text-xl text-slate-600 mb-12 max-w-4xl mx-auto leading-relaxed">
+            Archeion is your secure digital safe for everything you own — from car titles to property deeds, 
+            insurance policies to tax records. We give you CFO-style oversight of your assets by tracking costs, 
+            deadlines, and changes, then alerting you to opportunities to save money or avoid problems before they happen.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            <Button size="lg" className="text-lg px-10 py-6 bg-slate-900 hover:bg-slate-800" asChild>
+              <Link href="/signup">
+                Start Your Asset Oversight
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button variant="outline" size="lg" className="text-lg px-10 py-6 border-slate-300 text-slate-700 hover:bg-slate-50" asChild>
+              <Link href="/demo">View Demo</Link>
+            </Button>
+          </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">AI Insights</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalInsights}</div>
-              <p className="text-xs text-muted-foreground">+3 new this week</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Potential Savings</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">${potentialSavings.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">Identified opportunities</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Processing Status</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">98%</div>
-              <p className="text-xs text-muted-foreground">Documents analyzed</p>
-              <Progress value={98} className="mt-2" />
-            </CardContent>
-          </Card>
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-3xl font-bold text-slate-900 mb-2">{stat.number}</div>
+                <div className="text-sm text-slate-600">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
+      </section>
 
-        {/* Quick Actions */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Upload className="w-5 h-5" />
-              <span>Quick Actions</span>
-            </CardTitle>
-            <CardDescription>Upload and analyze your financial documents</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 bg-transparent"
-                onClick={() => setShowPhotoCapture(true)}
-              >
-                <Camera className="w-6 h-6" />
-                <span className="text-sm">Photo Capture</span>
-              </Button>
+      {/* Features Section */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-slate-900 mb-6">
+              Think of it as a CFO's Dashboard — For Your Home, Properties, and Assets
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Professional-grade oversight tools that give you the same visibility into your personal finances 
+              that a CFO has into a company's operations
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {features.map((feature, index) => {
+              const IconComponent = feature.icon
+              return (
+                <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-slate-50">
+                  <CardContent className="p-8">
+                    <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-6">
+                      <IconComponent className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-4">{feature.title}</h3>
+                    <p className="text-slate-600 text-lg leading-relaxed">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </section>
 
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 bg-transparent"
-              >
-                <MessageSquare className="w-6 h-6" />
-                <span className="text-sm">SMS Upload</span>
-              </Button>
+      {/* Legal Disclaimer */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-slate-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-sm text-slate-600">
+            <strong>Important:</strong> Archeion is a digital safe and asset oversight platform. We do not provide financial, 
+            investment, or tax advice. Our platform helps you organize, track, and monitor your assets and documents, 
+            but all financial decisions should be made in consultation with licensed professionals. 
+            For financial advice, please consult with qualified financial advisors, accountants, or attorneys.
+          </p>
+        </div>
+      </section>
 
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 bg-transparent"
-              >
-                <Upload className="w-6 h-6" />
-                <span className="text-sm">File Upload</span>
-              </Button>
+      {/* Categories Section */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-slate-900 mb-6">
+              Complete Asset Portfolio Coverage
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              From liquid assets to real estate, organize and monitor everything you own in one secure platform
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+            {categories.map((category, index) => {
+              const IconComponent = category.icon
+              return (
+                <Card key={index} className="text-center border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-white to-slate-50">
+                  <CardContent className="pt-8 pb-6">
+                    <div className={`w-16 h-16 ${category.color} rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                      <IconComponent className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900">{category.name}</h3>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </section>
 
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 bg-transparent"
-              >
-                <Calendar className="w-6 h-6" />
-                <span className="text-sm">Schedule Scan</span>
-              </Button>
+      {/* Upload Methods Section */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-slate-900 mb-6">
+              Seamless Asset Integration
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Multiple ways to add documents and track your assets for complete oversight
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+              <CardContent className="pt-8 pb-6">
+                <div className="w-20 h-20 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Upload className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-semibold text-slate-900 mb-4">Web Upload</h3>
+                <p className="text-slate-600 mb-6 text-lg">Drag and drop or browse files directly from your computer</p>
+                <Button variant="outline" asChild className="border-slate-300 text-slate-700 hover:bg-slate-50">
+                  <Link href="/signup">Try Now</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+              <CardContent className="pt-8 pb-6">
+                <div className="w-20 h-20 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Camera className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-semibold text-slate-900 mb-4">Photo Capture</h3>
+                <p className="text-slate-600 mb-6 text-lg">Take photos of documents with your mobile device</p>
+                <Button variant="outline" asChild className="border-slate-300 text-slate-700 hover:bg-slate-50">
+                  <Link href="/signup">Try Now</Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+              <CardContent className="pt-8 pb-6">
+                <div className="w-20 h-20 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <MessageSquare className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="text-2xl font-semibold text-slate-900 mb-4">SMS Upload</h3>
+                <p className="text-slate-600 mb-6 text-lg">Text photos to our secure number for instant processing</p>
+                <Button variant="outline" asChild className="border-slate-300 text-slate-700 hover:bg-slate-50">
+                  <Link href="/signup">Try Now</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-900">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Ready for CFO-Level Oversight of Your Assets?
+          </h2>
+          <p className="text-xl text-slate-300 mb-12">
+            Join individuals and families who trust Archeion to provide proactive oversight and intelligent monitoring of their assets
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <Button size="lg" variant="secondary" className="text-lg px-10 py-6 bg-white text-slate-900 hover:bg-slate-100" asChild>
+              <Link href="/signup">
+                Start Your Asset Oversight
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="text-lg px-10 py-6 border-white text-white hover:bg-white hover:text-slate-900" asChild>
+              <Link href="/demo">View Demo</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-950 text-white py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div>
+              <Logo size="lg" showIcon={false} />
+              <p className="text-slate-400 mt-6 text-lg">
+                A secure digital safe with CFO-level oversight for your personal assets and life admin.
+              </p>
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Document Categories */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle>Document Categories</CardTitle>
-                  <CardDescription>Organize and manage your financial documents</CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filter
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Search className="w-4 h-4 mr-2" />
-                    Search
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {mockCategories.map((category) => {
-                    const IconComponent = category.icon
-                    return (
-                      <Link key={category.id} href={`/category/${category.id}`}>
-                        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center space-x-3">
-                                <div
-                                  className={`w-10 h-10 ${category.color} rounded-lg flex items-center justify-center`}
-                                >
-                                  <IconComponent className="w-5 h-5 text-white" />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-sm">{category.name}</h3>
-                                  <p className="text-xs text-muted-foreground">{category.description}</p>
-                                </div>
-                              </div>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>View Details</DropdownMenuItem>
-                                  <DropdownMenuItem>Upload Document</DropdownMenuItem>
-                                  <DropdownMenuItem>Export Data</DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <p className="text-muted-foreground">Documents</p>
-                                <p className="font-semibold">{category.document_count}</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground">Total Value</p>
-                                <p className="font-semibold">
-                                  {category.total_value ? `$${category.total_value.toLocaleString()}` : "N/A"}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="mt-3 pt-3 border-t">
-                              <p className="text-xs text-muted-foreground">
-                                Last updated: {new Date(category.last_updated).toLocaleDateString()}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <div>
+              <h3 className="font-semibold mb-6 text-lg">Platform</h3>
+              <ul className="space-y-3 text-slate-400">
+                <li><Link href="/features" className="hover:text-white transition-colors">Features</Link></li>
+                <li><Link href="/pricing" className="hover:text-white transition-colors">Plans</Link></li>
+                <li><Link href="/demo" className="hover:text-white transition-colors">Demo</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-6 text-lg">Company</h3>
+              <ul className="space-y-3 text-slate-400">
+                <li><Link href="/about" className="hover:text-white transition-colors">About</Link></li>
+                <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
+                <li><Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-6 text-lg">Support</h3>
+              <ul className="space-y-3 text-slate-400">
+                <li><Link href="/help" className="hover:text-white transition-colors">Help Center</Link></li>
+                <li><Link href="/docs" className="hover:text-white transition-colors">Resources</Link></li>
+                <li><Link href="/status" className="hover:text-white transition-colors">Platform Status</Link></li>
+              </ul>
+            </div>
           </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* AI Insights */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="w-5 h-5" />
-                  <span>AI Insights</span>
-                </CardTitle>
-                <CardDescription>Latest financial optimization opportunities</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {mockInsights.slice(0, 3).map((insight) => (
-                  <div key={insight.id} className="border rounded-lg p-3">
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge className={getPriorityColor(insight.priority)} variant="outline">
-                        {insight.priority}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{insight.confidence}% confident</span>
-                    </div>
-                    <h4 className="font-semibold text-sm mb-1">{insight.title}</h4>
-                    <p className="text-xs text-muted-foreground mb-2">{insight.description}</p>
-                    {insight.potential_savings && (
-                      <div className="flex items-center space-x-1 text-green-600">
-                        <DollarSign className="w-3 h-3" />
-                        <span className="text-xs font-semibold">
-                          ${insight.potential_savings.toLocaleString()} savings
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" className="w-full bg-transparent">
-                  View All Insights
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Bell className="w-5 h-5" />
-                  <span>Recent Activity</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {mockRecentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{activity.action}</p>
-                        <p className="text-xs text-muted-foreground truncate">{activity.document}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <Badge className={getStatusColor(activity.status)} variant="outline">
-                            {activity.status}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">{activity.timestamp}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Separator className="my-4" />
-                <Button variant="outline" size="sm" className="w-full bg-transparent">
-                  View All Activity
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="border-t border-slate-800 mt-12 pt-8 text-center text-slate-400">
+            <p>&copy; 2024 Archeion. All rights reserved.</p>
           </div>
         </div>
-      </main>
-
-      {/* Photo Capture Modal */}
-      {showPhotoCapture && (
-        <PhotoCapture
-          onClose={() => setShowPhotoCapture(false)}
-          onCapture={(file) => {
-            console.log("Captured file:", file)
-            setShowPhotoCapture(false)
-            // Here you would typically upload the file
-          }}
-        />
-      )}
+      </footer>
     </div>
   )
 }
