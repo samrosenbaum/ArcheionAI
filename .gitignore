@@ -29,6 +29,16 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Security - API Keys and Secrets
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+secrets.json
+secrets.yaml
+secrets.yml
+
 # Vercel
 .vercel
 
