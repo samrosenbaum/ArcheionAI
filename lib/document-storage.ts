@@ -22,7 +22,7 @@ export class DocumentStorageService {
       const filePath = `${userId}/${category}/${fileName}`
 
       // Upload file to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage.from("documents").upload(filePath, file)
+      const { error: uploadError } = await supabase.storage.from("documents").upload(filePath, file)
 
       if (uploadError) {
         throw new Error(`Upload failed: ${uploadError.message}`)

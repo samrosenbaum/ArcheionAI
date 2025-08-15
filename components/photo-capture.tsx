@@ -251,7 +251,7 @@ export function PhotoCapture({ onClose, onCapture }: PhotoCaptureProps) {
                     <div>
                       <p className="text-sm text-muted-foreground mb-2">Tags</p>
                       <div className="flex flex-wrap gap-1">
-                        {classification.tags.map((tag, index) => (
+                        {classification.tags.map((tag: string, index: number) => (
                           <Badge key={index} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>

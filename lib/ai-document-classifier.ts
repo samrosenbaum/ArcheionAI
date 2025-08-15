@@ -10,9 +10,8 @@ export interface ClassificationResult {
 
 export class AIDocumentClassifier {
   static async classifyDocument(file: File): Promise<ClassificationResult> {
-    // Simulate AI classification based on filename and file type
+    // Simulate AI classification based on filename
     const fileName = file.name.toLowerCase()
-    const fileType = file.type
 
     // Basic classification logic based on filename patterns
     if (fileName.includes("tax") || fileName.includes("1040") || fileName.includes("w2")) {
@@ -94,7 +93,7 @@ export class AIDocumentClassifier {
       const classification = await this.classifyDocument(file)
 
       // Store the document with classification
-      const { document, error } = await DocumentStorageService.uploadDocument(
+      const { error } = await DocumentStorageService.uploadDocument(
         file,
         userId,
         classification.category,

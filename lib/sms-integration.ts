@@ -142,7 +142,7 @@ export class SMSIntegrationService {
     }
   }
 
-  private static async getUserInsights(userPhone: string): Promise<string> {
+  private static async getUserInsights(_userPhone: string): Promise<string> {
     // In a real implementation, this would fetch actual user insights
     return `📊 Your latest insights:
 • Tax savings opportunity: $1,200

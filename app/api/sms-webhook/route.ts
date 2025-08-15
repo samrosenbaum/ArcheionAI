@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { SMSIntegrationService } from "@/lib/sms-integration"
 import { validateSMSWebhook } from "@/lib/validation"
-import { handleError, formatErrorResponse } from "@/lib/errors"
+import { handleError } from "@/lib/errors"
 
 export async function POST(request: NextRequest) {
   try {

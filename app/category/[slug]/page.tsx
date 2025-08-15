@@ -100,7 +100,6 @@ export default function CategoryPage() {
   const [selectedSubcategory, setSelectedSubcategory] = useState("all")
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isUploadOpen, setIsUploadOpen] = useState(false)
-  const [uploadCategory, setUploadCategory] = useState("")
   const [uploadSubcategory, setUploadSubcategory] = useState("")
 
   useEffect(() => {
@@ -150,7 +149,7 @@ export default function CategoryPage() {
         }, 200)
 
         // Upload document
-        const { document, error } = await DocumentStorageService.uploadDocument(
+        const { error } = await DocumentStorageService.uploadDocument(
           file,
           userId,
           slug,

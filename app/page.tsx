@@ -1,8 +1,6 @@
 "use client"
-
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { 
   FileText, 
@@ -15,7 +13,6 @@ import {
   Upload,
   Camera,
   MessageSquare,
-  CheckCircle,
   Zap,
   Lock,
   BarChart3
@@ -23,7 +20,6 @@ import {
 import Link from "next/link"
 
 export default function LandingPage() {
-  const [isLoading, setIsLoading] = useState(false)
 
   const features = [
     {
@@ -76,7 +72,7 @@ export default function LandingPage() {
                 <Link href="/login">Sign In</Link>
               </Button>
               <Button asChild className="bg-slate-900 hover:bg-slate-800">
-                <Link href="/signup">Get Started</Link>
+                <Link href="/login">Get Started</Link>
               </Button>
             </div>
           </div>
@@ -108,7 +104,7 @@ export default function LandingPage() {
           
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
             <Button size="lg" className="text-lg px-10 py-6 bg-slate-900 hover:bg-slate-800" asChild>
-              <Link href="/signup">
+              <Link href="/login">
                 Start Your Asset Oversight
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -225,7 +221,7 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-semibold text-slate-900 mb-4">Web Upload</h3>
                 <p className="text-slate-600 mb-6 text-lg">Drag and drop or browse files directly from your computer</p>
                 <Button variant="outline" asChild className="border-slate-300 text-slate-700 hover:bg-slate-50">
-                  <Link href="/signup">Try Now</Link>
+                  <Link href="/login">Try Now</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -238,7 +234,7 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-semibold text-slate-900 mb-4">Photo Capture</h3>
                 <p className="text-slate-600 mb-6 text-lg">Take photos of documents with your mobile device</p>
                 <Button variant="outline" asChild className="border-slate-300 text-slate-700 hover:bg-slate-50">
-                  <Link href="/signup">Try Now</Link>
+                  <Link href="/login">Try Now</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -251,7 +247,7 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-semibold text-slate-900 mb-4">SMS Upload</h3>
                 <p className="text-slate-600 mb-6 text-lg">Text photos to our secure number for instant processing</p>
                 <Button variant="outline" asChild className="border-slate-300 text-slate-700 hover:bg-slate-50">
-                  <Link href="/signup">Try Now</Link>
+                  <Link href="/login">Try Now</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -270,7 +266,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Button size="lg" variant="secondary" className="text-lg px-10 py-6 bg-white text-slate-900 hover:bg-slate-100" asChild>
-              <Link href="/signup">
+              <Link href="/login">
                 Start Your Asset Oversight
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>

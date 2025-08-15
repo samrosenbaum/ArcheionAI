@@ -44,7 +44,10 @@ export function MobileOptimizedHeader({ onMenuToggle }: MobileHeaderProps) {
       {/* Mobile Action Bar */}
       <div className="md:hidden border-t border-slate-200/60 bg-white/80 backdrop-blur-sm">
         <div className="flex items-center justify-center gap-4 px-4 py-3">
-          <PhotoCapture />
+          <PhotoCapture 
+            onClose={() => {}} 
+            onCapture={(file) => console.log('Document captured:', file)} 
+          />
 
           <Button variant="outline" size="sm" className="bg-transparent flex-1 max-w-48">
             <MessageSquare className="h-4 w-4 mr-2" />

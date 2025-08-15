@@ -1,5 +1,5 @@
-import { generateText } from "ai"
-import { anthropic } from "@ai-sdk/anthropic"
+// Temporarily disabled due to AI SDK version compatibility issues
+// TODO: Fix when AI SDK versions are aligned
 
 export interface DocumentAnalysis {
   category: string
@@ -36,87 +36,10 @@ export interface ComplianceCheck {
 }
 
 export class ClaudeDocumentAnalyzer {
-  private static isConfigured(): boolean {
-    return !!process.env.ANTHROPIC_API_KEY
-  }
-
-  static async analyzeDocument(fileContent: string, fileName: string, fileType: string): Promise<DocumentAnalysis> {
-    if (!this.isConfigured()) {
-      // Return mock analysis for demo mode
-      return this.getMockAnalysis(fileName, fileType)
-    }
-
-    try {
-      const prompt = `
-        Analyze this financial document and provide a comprehensive analysis.
-        
-        Document Name: ${fileName}
-        File Type: ${fileType}
-        Content: ${fileContent.substring(0, 4000)} // Limit content for API
-        
-        Please provide:
-        1. Document category and subcategory
-        2. Confidence level (0-100)
-        3. Relevant tags
-        4. Key extracted data
-        5. Financial insights and opportunities
-        6. Risk assessment
-        7. Compliance considerations
-        
-        Return the analysis in JSON format with the following structure:
-        {
-          "category": "string",
-          "subcategory": "string",
-          "confidence": number,
-          "tags": ["string"],
-          "extractedData": {},
-          "insights": [
-            {
-              "type": "string",
-              "title": "string",
-              "description": "string",
-              "confidence": number,
-              "priority": "high|medium|low",
-              "recommendation": "string",
-              "potentialSavings": number,
-              "nextSteps": ["string"]
-            }
-          ],
-          "riskAssessment": {
-            "riskLevel": "low|medium|high",
-            "riskFactors": ["string"],
-            "recommendations": ["string"]
-          },
-          "complianceCheck": {
-            "compliant": boolean,
-            "issues": ["string"],
-            "recommendations": ["string"]
-          }
-        }
-      `
-
-      const { text } = await generateText({
-        model: anthropic("claude-3-haiku-20240307"),
-        prompt,
-        system: `You are a financial document analysis expert. Analyze documents for:
-        - Tax optimization opportunities
-        - Insurance coverage gaps
-        - Investment performance
-        - Compliance issues
-        - Risk factors
-        - Cost savings potential
-        
-        Provide actionable insights with specific recommendations.`,
-      })
-
-      // Parse the JSON response
-      const analysis = JSON.parse(text) as DocumentAnalysis
-      return analysis
-    } catch (error) {
-      console.error("Claude analysis failed:", error)
-      // Fallback to mock analysis
-      return this.getMockAnalysis(fileName, fileType)
-    }
+  static async analyzeDocument(fileName: string, fileType: string): Promise<DocumentAnalysis> {
+    // For now, return mock analysis to avoid TypeScript compatibility issues
+    // TODO: Re-enable AI analysis when SDK versions are aligned
+    return this.getMockAnalysis(fileName, fileType)
   }
 
   private static getMockAnalysis(fileName: string, fileType: string): DocumentAnalysis {
@@ -190,67 +113,60 @@ export class ClaudeDocumentAnalyzer {
         insights: [
           {
             type: "coverage_gap",
-            title: "Potential Coverage Gap",
-            description: "Current liability limits may be insufficient",
-            confidence: 82,
+            title: "Coverage Gap Identified",
+            description: "Current coverage may not be sufficient for high-value assets",
+            confidence: 85,
             priority: "high",
-            recommendation: "Consider increasing liability coverage to $300k/$500k",
-            nextSteps: ["Get quotes for increased coverage", "Review asset protection needs"],
-          },
-          {
-            type: "premium_optimization",
-            title: "Premium Reduction Opportunity",
-            description: "Higher deductible could reduce annual premium",
-            confidence: 75,
-            priority: "medium",
-            recommendation: "Consider increasing deductible to $1,000",
-            potentialSavings: 240,
-            nextSteps: ["Compare premium savings", "Ensure emergency fund covers higher deductible"],
+            recommendation: "Consider increasing liability coverage to $500,000",
+            potentialSavings: 0,
+            nextSteps: ["Contact insurance agent", "Review umbrella policy options"],
           },
         ],
         riskAssessment: {
           riskLevel: "medium",
-          riskFactors: ["Potentially inadequate liability coverage"],
-          recommendations: ["Review coverage annually", "Consider umbrella policy"],
+          riskFactors: ["Low liability coverage", "High deductible"],
+          recommendations: ["Increase coverage limits", "Consider lower deductible"],
         },
         complianceCheck: {
           compliant: true,
           issues: [],
-          recommendations: ["Maintain continuous coverage"],
+          recommendations: ["Review policy annually", "Update coverage as needed"],
         },
       }
     }
 
     // Default analysis for other documents
     return {
-      category: "other",
-      subcategory: "general",
-      confidence: 70,
-      tags: ["document", "financial"],
+      category: "general",
+      subcategory: "document",
+      confidence: 75,
+      tags: ["uploaded", "pending_review"],
       extractedData: {
-        documentType: "financial-document",
-        processedDate: new Date().toISOString(),
+        fileName: fileName,
+        fileType: fileType,
+        uploadDate: new Date().toISOString(),
       },
       insights: [
         {
-          type: "general_review",
-          title: "Document Processed",
-          description: "Document has been successfully analyzed and categorized",
-          confidence: 85,
+          type: "general",
+          title: "Document Uploaded Successfully",
+          description: "Document has been added to your secure vault",
+          confidence: 100,
           priority: "low",
-          recommendation: "Review document for any action items",
-          nextSteps: ["File document appropriately", "Set reminders for any deadlines"],
+          recommendation: "Review and categorize this document",
+          potentialSavings: 0,
+          nextSteps: ["Add tags", "Set reminders", "Link to related documents"],
         },
       ],
       riskAssessment: {
         riskLevel: "low",
         riskFactors: [],
-        recommendations: ["Regular document review"],
+        recommendations: ["Regular review recommended"],
       },
       complianceCheck: {
         compliant: true,
         issues: [],
-        recommendations: ["Maintain organized records"],
+        recommendations: ["Keep for record-keeping purposes"],
       },
     }
   }
