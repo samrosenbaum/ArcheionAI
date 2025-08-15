@@ -26,7 +26,7 @@ export async function GET() {
     // Check database connection
     if (!isDemoMode) {
       try {
-        const { data, error } = await supabase.from('documents').select('count').limit(1)
+        const { error } = await supabase.from('documents').select('count').limit(1)
         if (error) throw error
         health.services.database = 'healthy'
         health.checks.database = true
