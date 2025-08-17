@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -13,22 +13,12 @@ import {
   Clock,
   CheckCircle,
   TrendingUp,
-  TrendingDown,
   DollarSign,
   Calendar,
   Filter,
   Search,
   Eye,
-  FileText,
-  Shield,
-  Home,
-  Car,
-  Coins,
-  Building,
-  Users,
-  Crown,
-  Bell,
-  Zap
+
 } from "lucide-react"
 
 export default function InsightsPage() {
@@ -171,7 +161,7 @@ export default function InsightsPage() {
       case 'opportunity': return <TrendingUp className="h-5 w-5 text-slate-700" />
       case 'renewal': return <CheckCircle className="h-5 w-5 text-slate-200" />
       case 'review': return <Eye className="h-5 w-5 text-slate-700" />
-      default: return <Bell className="h-5 w-5 text-slate-700" />
+      default: return <AlertTriangle className="h-5 w-5 text-slate-700" />
     }
   }
 
@@ -217,7 +207,7 @@ export default function InsightsPage() {
           <Card className="border border-slate-200 shadow-sm">
             <CardContent className="p-6 text-center">
               <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Bell className="h-6 w-6 text-slate-700" />
+                <AlertTriangle className="h-6 w-6 text-slate-700" />
               </div>
               <p className="text-2xl font-bold text-slate-900">{summary.total}</p>
               <p className="text-sm text-slate-600">Total Insights</p>
@@ -364,7 +354,7 @@ export default function InsightsPage() {
                           View Details
                         </Button>
                         <Button size="sm" className="bg-slate-900 hover:bg-slate-800">
-                          <Zap className="h-4 w-4 mr-2" />
+                          <AlertTriangle className="h-4 w-4 mr-2" />
                           Take Action
                         </Button>
                       </div>

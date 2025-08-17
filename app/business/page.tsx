@@ -2,22 +2,17 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
 import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
 import { useMockAuth } from "@/lib/auth-context"
 import { 
-  Briefcase,
-  Building,
-  FileText,
-  Plus,
-  Download,
-  Upload
+  Building
 } from "lucide-react"
 
 export default function BusinessPage() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const { user } = useMockAuth()
+  const { user: _user } = useMockAuth()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">

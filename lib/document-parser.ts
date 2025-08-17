@@ -228,8 +228,8 @@ export class DocumentParser {
    */
   static async parseDocument(
     file: File,
-    userId: string,
-    options: ParsingOptions = {}
+    _userId: string,
+    _options: ParsingOptions = {}
   ): Promise<ParsedDocument> {
     const startTime = Date.now()
     
@@ -326,9 +326,29 @@ export class DocumentParser {
    */
   private static async extractTextFromImage(file: File): Promise<string> {
     try {
-      // For now, return filename as text
-      // In production, you'd integrate with an OCR service like Google Vision API
-      return file.name
+      console.log('Starting OCR processing for image:', file.name)
+      
+      // Import Tesseract.js dynamically
+      const { createWorker } = await import('tesseract.js')
+      
+      // Create a worker for OCR processing
+      const worker = await createWorker('eng', 1, {
+        logger: m => console.log('OCR Progress:', m)
+      })
+      
+      // Convert file to base64 for Tesseract
+      const arrayBuffer = await file.arrayBuffer()
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+      const dataUrl = `data:${file.type};base64,${base64}`
+      
+      // Perform OCR
+      const { data: { text } } = await worker.recognize(dataUrl)
+      
+      // Terminate worker to free memory
+      await worker.terminate()
+      
+      console.log('OCR completed, extracted text length:', text.length)
+      return text || file.name
     } catch (error) {
       console.warn('Image OCR failed:', error)
       return file.name
@@ -340,9 +360,19 @@ export class DocumentParser {
    */
   private static async extractTextFromWord(file: File): Promise<string> {
     try {
-      // For now, return filename as text
-      // In production, you'd use a library like mammoth.js
-      return file.name
+      console.log('Starting Word document processing:', file.name)
+      
+      // Import mammoth.js dynamically
+      const mammoth = await import('mammoth')
+      
+      // Convert file to array buffer
+      const arrayBuffer = await file.arrayBuffer()
+      
+      // Extract text from Word document
+      const result = await mammoth.extractRawText({ arrayBuffer })
+      
+      console.log('Word document processing completed, extracted text length:', result.value.length)
+      return result.value || file.name
     } catch (error) {
       console.warn('Word document parsing failed:', error)
       return file.name
@@ -354,9 +384,29 @@ export class DocumentParser {
    */
   private static async extractTextFromExcel(file: File): Promise<string> {
     try {
-      // For now, return filename as text
-      // In production, you'd use a library like xlsx
-      return file.name
+      console.log('Starting Excel document processing:', file.name)
+      
+      // Import xlsx dynamically
+      const XLSX = await import('xlsx')
+      
+      // Convert file to array buffer
+      const arrayBuffer = await file.arrayBuffer()
+      
+      // Read the Excel file
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+      
+      let fullText = ''
+      
+      // Process each sheet
+      workbook.SheetNames.forEach(sheetName => {
+        const sheet = workbook.Sheets[sheetName]
+        const sheetText = XLSX.utils.sheet_to_txt(sheet)
+        
+        fullText += `Sheet: ${sheetName}\n${sheetText}\n\n`
+      })
+      
+      console.log('Excel processing completed, extracted text length:', fullText.length)
+      return fullText || file.name
     } catch (error) {
       console.warn('Excel parsing failed:', error)
       return file.name
@@ -631,7 +681,7 @@ export class DocumentParser {
   /**
    * Determine document type based on content
    */
-  private static determineDocumentType(text: string, parsedData: any): string {
+  private static determineDocumentType(_text: string, parsedData: any): string {
     const categories = parsedData.categories
     
     if (categories.includes('insurance')) return 'Insurance Policy'
@@ -687,7 +737,7 @@ export class DocumentParser {
   /**
    * Generate insights based on parsed data
    */
-  private static generateInsights(parsedData: any, filename: string): ParsedDocument['insights'] {
+  private static generateInsights(parsedData: any, _filename: string): ParsedDocument['insights'] {
     const insights: ParsedDocument['insights'] = []
     
     // Check for upcoming deadlines
@@ -739,7 +789,7 @@ export class DocumentParser {
   /**
    * Helper methods
    */
-  private static determineAmountType(match: string, context: string): ParsedDocument['extractedData']['amounts'][0]['type'] {
+  private static determineAmountType(_match: string, context: string): ParsedDocument['extractedData']['amounts'][0]['type'] {
     const lowerContext = context.toLowerCase()
     if (lowerContext.includes('premium')) return 'premium'
     if (lowerContext.includes('deductible')) return 'deductible'
@@ -750,7 +800,7 @@ export class DocumentParser {
     return 'other'
   }
 
-  private static determineDateType(match: string, context: string): ParsedDocument['extractedData']['dates'][0]['type'] {
+  private static determineDateType(_match: string, context: string): ParsedDocument['extractedData']['dates'][0]['type'] {
     const lowerContext = context.toLowerCase()
     if (lowerContext.includes('effective')) return 'effective'
     if (lowerContext.includes('expiration') || lowerContext.includes('expires')) return 'expiration'

@@ -47,7 +47,7 @@ export default function TestConnectionPage() {
 
       // Test 4: Database table access
       try {
-        const { data: tables, error: tableError } = await supabase
+        const { data: _tables, error: tableError } = await supabase
           .from('documents')
           .select('count')
           .limit(1)
@@ -64,7 +64,7 @@ export default function TestConnectionPage() {
       // Test 5: Simple file upload test
       try {
         const testFile = new File(['test content'], 'test.txt', { type: 'text/plain' })
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { data: _uploadData, error: uploadError } = await supabase.storage
           .from('documents')
           .upload('test/test.txt', testFile, { upsert: true })
         
@@ -144,7 +144,7 @@ export default function TestConnectionPage() {
                         ? 'text-red-600'
                         : 'text-slate-600'
                     }`}>
-                      {typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
+                      {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
                     </span>
                   </div>
                 ))}
@@ -164,7 +164,7 @@ export default function TestConnectionPage() {
                   value === '❌ Missing' ? 'text-slate-600' : 
                   'text-slate-500'
                 }`}>
-                  {value}
+                  {String(value)}
                 </span>
               </li>
             ))}

@@ -15,17 +15,12 @@ import {
   CheckCircle,
   Clock,
   Search,
-  Filter,
   Grid,
   List,
   Plus,
-  Download,
   Eye,
   Edit,
-  Trash2,
-  DollarSign,
-  TrendingUp,
-  TrendingDown
+  DollarSign
 } from "lucide-react"
 
 export default function TaxPage() {

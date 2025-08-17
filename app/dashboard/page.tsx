@@ -12,7 +12,7 @@ import {
   FileText,
   Shield,
   TrendingUp,
-  Home as HomeIcon,
+
   Car,
   Building,
   Users,
@@ -22,10 +22,7 @@ import {
   ChevronRight,
   Upload,
   Plus,
-  Eye,
-  AlertTriangle,
-  Clock,
-  CheckCircle
+  Eye
 } from "lucide-react"
 
 export default function DashboardPage() {

@@ -228,7 +228,8 @@ export default function InsurancePage() {
                     <p className="text-sm text-slate-500">Total Documents</p>
                     <p className="text-2xl font-bold text-slate-900">
                       {policies.reduce((sum, policy) => sum + policy.documents, 0)}
-                    </div>
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
@@ -22,9 +22,6 @@ import {
   AlertTriangle,
   Clock,
   Trash2,
-  Eye,
-  Download,
-  Share2,
   Mail,
   Edit,
   Save,
@@ -249,7 +246,7 @@ export default function UploadPage() {
     setEditingFile(fileId)
   }
 
-  const saveEditing = (fileId: string) => {
+  const saveEditing = (_fileId: string) => {
     setEditingFile(null)
     toast({
       title: "File updated",
@@ -304,32 +301,7 @@ export default function UploadPage() {
     })
   }
 
-  const handleDownload = async (file: UploadedFile) => {
-    if (!file.filePath) {
-      toast({
-        title: "Download failed",
-        description: "File path not found",
-        variant: "destructive",
-      })
-      return
-    }
 
-    try {
-      const url = await FileUploadService.getFileUrl(file.filePath)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = file.name
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    } catch (error) {
-      toast({
-        title: "Download failed",
-        description: "Failed to generate download link",
-        variant: "destructive",
-      })
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">

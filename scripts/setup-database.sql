@@ -83,6 +83,142 @@ CREATE TABLE IF NOT EXISTS continuing_education (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create specialized document metadata tables
+-- Insurance documents
+CREATE TABLE IF NOT EXISTS insurance_documents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  policy_number TEXT,
+  insurance_company TEXT NOT NULL,
+  policy_type TEXT NOT NULL,
+  coverage_amount DECIMAL(12,2),
+  premium_amount DECIMAL(10,2),
+  deductible_amount DECIMAL(10,2),
+  effective_date DATE,
+  expiration_date DATE,
+  renewal_frequency_months INTEGER DEFAULT 12,
+  beneficiaries TEXT[],
+  riders TEXT[],
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Real estate documents
+CREATE TABLE IF NOT EXISTS real_estate_documents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  property_address TEXT NOT NULL,
+  property_type TEXT,
+  square_footage INTEGER,
+  acres DECIMAL(8,2),
+  purchase_price DECIMAL(12,2),
+  current_value DECIMAL(12,2),
+  property_tax_amount DECIMAL(10,2),
+  property_tax_due_date DATE,
+  mortgage_amount DECIMAL(12,2),
+  mortgage_rate DECIMAL(5,4),
+  mortgage_term_years INTEGER,
+  hoa_fees DECIMAL(8,2),
+  hoa_frequency TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Vehicle documents
+CREATE TABLE IF NOT EXISTS vehicle_documents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  vehicle_vin TEXT,
+  make TEXT NOT NULL,
+  model TEXT NOT NULL,
+  year INTEGER,
+  license_plate TEXT,
+  registration_expiry DATE,
+  insurance_policy_number TEXT,
+  loan_amount DECIMAL(10,2),
+  loan_rate DECIMAL(5,4),
+  loan_term_months INTEGER,
+  warranty_expiry DATE,
+  maintenance_schedule TEXT[],
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Healthcare documents
+CREATE TABLE IF NOT EXISTS healthcare_documents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  document_type TEXT NOT NULL,
+  healthcare_provider TEXT,
+  patient_name TEXT,
+  diagnosis TEXT,
+  treatment TEXT,
+  prescription_details TEXT,
+  appointment_date DATE,
+  follow_up_date DATE,
+  insurance_coverage TEXT,
+  out_of_pocket_cost DECIMAL(8,2),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Legal documents
+CREATE TABLE IF NOT EXISTS legal_documents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  document_type TEXT NOT NULL,
+  legal_firm TEXT,
+  attorney_name TEXT,
+  case_number TEXT,
+  court_name TEXT,
+  filing_date DATE,
+  hearing_date DATE,
+  settlement_amount DECIMAL(12,2),
+  legal_fees DECIMAL(10,2),
+  status TEXT,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Investment documents
+CREATE TABLE IF NOT EXISTS investment_documents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  account_number TEXT,
+  account_type TEXT NOT NULL,
+  institution_name TEXT NOT NULL,
+  balance_amount DECIMAL(12,2),
+  performance_percentage DECIMAL(5,2),
+  risk_level TEXT,
+  investment_strategy TEXT,
+  beneficiary_designations TEXT[],
+  contribution_limit DECIMAL(10,2),
+  required_minimum_distribution DECIMAL(10,2),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tax documents
+CREATE TABLE IF NOT EXISTS tax_documents (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  tax_year TEXT NOT NULL,
+  filing_status TEXT,
+  filing_type TEXT,
+  total_income DECIMAL(12,2),
+  adjusted_gross_income DECIMAL(12,2),
+  total_deductions DECIMAL(10,2),
+  tax_liability DECIMAL(10,2),
+  refund_amount DECIMAL(10,2),
+  payment_amount DECIMAL(10,2),
+  filing_deadline DATE,
+  extension_filed BOOLEAN DEFAULT FALSE,
+  extension_deadline DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create document_insights table
 CREATE TABLE IF NOT EXISTS document_insights (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -115,15 +251,28 @@ CREATE TABLE IF NOT EXISTS categories (
   last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Insert default categories
+-- Insert comprehensive categories
 INSERT INTO categories (name, icon, color, description) VALUES
-('insurance', 'Shield', 'from-blue-500 to-indigo-600', 'Insurance policies and coverage documents'),
-('tax', 'FileText', 'from-emerald-500 to-teal-600', 'Tax returns, receipts, and tax-related documents'),
-('real-estate', 'Home', 'from-purple-500 to-violet-600', 'Property deeds, mortgages, and real estate documents'),
-('vehicle', 'Car', 'from-orange-500 to-red-500', 'Vehicle titles, registrations, and automotive documents'),
-('business', 'Building', 'from-rose-500 to-pink-600', 'Business formation, operating agreements, and corporate documents'),
-('personal', 'Users', 'from-cyan-500 to-blue-500', 'Personal documents, identification, and miscellaneous files'),
-('career', 'GraduationCap', 'from-indigo-500 to-purple-600', 'Professional licenses, certifications, and career documents')
+-- Core Financial & Legal
+('insurance', 'Shield', 'from-slate-500 to-slate-600', 'Insurance policies and coverage documents'),
+('tax', 'FileText', 'from-slate-500 to-slate-600', 'Tax returns, receipts, and tax-related documents'),
+('real-estate', 'Home', 'from-slate-500 to-slate-600', 'Property deeds, mortgages, and real estate documents'),
+('vehicle', 'Car', 'from-slate-500 to-slate-600', 'Vehicle titles, registrations, and automotive documents'),
+('business', 'Building', 'from-slate-500 to-slate-600', 'Business formation, operating agreements, and corporate documents'),
+('personal', 'Users', 'from-slate-500 to-slate-600', 'Personal documents, identification, and miscellaneous files'),
+('career', 'GraduationCap', 'from-slate-500 to-slate-600', 'Professional licenses, certifications, and career documents'),
+
+-- Identity & Vital Records
+('identity', 'CreditCard', 'from-slate-500 to-slate-600', 'Birth certificates, passports, driver licenses, IDs'),
+('healthcare', 'Heart', 'from-slate-500 to-slate-600', 'Medical records, prescriptions, health insurance'),
+('legal', 'Scale', 'from-slate-500 to-slate-600', 'Wills, trusts, power of attorney, legal contracts'),
+('education', 'BookOpen', 'from-slate-500 to-slate-600', 'Diplomas, transcripts, student loans, certifications'),
+('investments', 'TrendingUp', 'from-slate-500 to-slate-600', 'Investment accounts, retirement plans, stock certificates'),
+('banking', 'CreditCard', 'from-slate-500 to-slate-600', 'Bank statements, credit cards, loan documents'),
+('contracts', 'FileContract', 'from-slate-500 to-slate-600', 'Service contracts, warranties, subscription agreements'),
+('family', 'Users', 'from-slate-500 to-slate-600', 'Family documents, custody, support agreements'),
+('emergency', 'AlertTriangle', 'from-slate-500 to-slate-600', 'Emergency contacts, evacuation plans, medical info'),
+('miscellaneous', 'Archive', 'from-slate-500 to-slate-600', 'Travel documents, pet records, memberships')
 ON CONFLICT (name) DO NOTHING;
 
 -- Create RLS policies

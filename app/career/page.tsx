@@ -1,12 +1,10 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
@@ -16,23 +14,17 @@ import {
   GraduationCap,
   Calendar,
   AlertTriangle,
-  CheckCircle,
   Clock,
   Plus,
   Search,
-  Filter,
-  SortAsc,
   Eye,
   Edit,
   Trash2,
   Download,
-  Upload,
-  Target,
   BookOpen,
   Award,
   Shield,
   Building,
-  UserCheck,
   FileText
 } from "lucide-react"
 
@@ -74,10 +66,10 @@ export default function CareerPage() {
   const [filterStatus, setFilterStatus] = useState("all")
   const [sortBy, setSortBy] = useState("expiration")
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [showAddLicense, setShowAddLicense] = useState(false)
-  const [showAddCE, setShowAddCE] = useState(false)
-  const { user } = useMockAuth()
-  const { toast } = useToast()
+  const [_showAddLicense, setShowAddLicense] = useState(false)
+  const [_showAddCE, setShowAddCE] = useState(false)
+  const { user: _user } = useMockAuth()
+  const { toast: _toast } = useToast()
 
   // Mock data - replace with actual Supabase queries
   const mockLicenses: CareerLicense[] = [
@@ -162,9 +154,9 @@ export default function CareerPage() {
     { id: "healthcare", name: "Healthcare", icon: Shield, color: "from-slate-500 to-slate-600" },
     { id: "legal", name: "Legal", icon: Building, color: "from-slate-500 to-slate-600" },
     { id: "real-estate", name: "Real Estate", icon: Building, color: "from-slate-500 to-slate-600" },
-    { id: "finance", name: "Finance", icon: Target, color: "from-slate-500 to-slate-600" },
+    { id: "finance", name: "Finance", icon: Shield, color: "from-slate-500 to-slate-600" },
     { id: "education", name: "Education", icon: GraduationCap, color: "from-slate-500 to-slate-600" },
-    { id: "technology", name: "Technology", icon: Target, color: "from-slate-500 to-slate-600" }
+    { id: "technology", name: "Technology", icon: Building, color: "from-slate-500 to-slate-600" }
   ]
 
   const getStatusColor = (status: string) => {
@@ -204,12 +196,7 @@ export default function CareerPage() {
     return diffDays
   }
 
-  const getRenewalStatus = (daysUntilExpiration: number) => {
-    if (daysUntilExpiration < 0) return 'overdue'
-    if (daysUntilExpiration <= 30) return 'due_soon'
-    if (daysUntilExpiration <= 90) return 'due_soon'
-    return 'on_track'
-  }
+
 
   const filteredLicenses = mockLicenses.filter(license => {
     const matchesSearch = license.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -342,7 +329,7 @@ export default function CareerPage() {
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                  <Target className="h-6 w-6 text-slate-700" />
+                  <Shield className="h-6 w-6 text-slate-700" />
                 </div>
               </div>
             </CardContent>
@@ -644,7 +631,7 @@ export default function CareerPage() {
                     </div>
 
                     <div className="flex items-center gap-2 text-sm">
-                      <Target className="h-4 w-4 text-slate-400" />
+                      <BookOpen className="h-4 w-4 text-slate-400" />
                       <span className="text-slate-600">{activity.category}</span>
                     </div>
 

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
 import { useMockAuth } from "@/lib/auth-context"
@@ -16,7 +16,6 @@ import {
   Briefcase,
   Users,
   Car,
-  FileText,
   Building,
   ArrowRight,
   ArrowLeft,
@@ -123,7 +122,7 @@ export default function AddAssetPage() {
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | null>(null)
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("")
   const router = useRouter()
-  const { user } = useMockAuth()
+  const { user: _user } = useMockAuth()
 
   const handleCategorySelect = (category: AssetCategory) => {
     setSelectedCategory(category)

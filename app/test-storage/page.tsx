@@ -6,12 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Logo } from "@/components/logo"
-import { Navigation } from "@/components/ui/navigation"
+import { Navigation } from "@/components/navigation"
 import { createClient } from '@supabase/supabase-js'
 import { 
   Upload,
-  FileText,
-  CheckCircle,
   AlertTriangle,
   Clock,
   Database,
@@ -68,7 +66,7 @@ export default function TestStoragePage() {
       // Test 4: Test storage policies
       try {
         // Try to list objects in documents bucket
-        const { data: objects, error } = await supabase.storage
+        const { data: _objects, error } = await supabase.storage
           .from('documents')
           .list('', { limit: 1 })
         
@@ -83,7 +81,7 @@ export default function TestStoragePage() {
 
       // Test 5: Check database tables
       try {
-        const { data: tables, error } = await supabase
+        const { data: _tables, error } = await supabase
           .from('documents')
           .select('id')
           .limit(1)
@@ -101,7 +99,7 @@ export default function TestStoragePage() {
       if (selectedFile) {
         try {
           const testPath = `test/${Date.now()}-${selectedFile.name}`
-          const { data, error } = await supabase.storage
+          const { data: _data, error } = await supabase.storage
             .from('documents')
             .upload(testPath, selectedFile, {
               cacheControl: '3600',
@@ -225,7 +223,7 @@ export default function TestStoragePage() {
                         value === '❌ Missing' ? 'text-slate-600' :
                         'text-slate-500'
                       }`}>
-                        {value}
+                        {String(value)}
                       </span>
                     </div>
                   ))}

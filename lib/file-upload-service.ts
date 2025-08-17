@@ -261,7 +261,7 @@ export class FileUploadService {
       // Verify user owns the file
       const { data: doc, error: fetchError } = await supabase
         .from('documents')
-        .select('user_id')
+        .select('user_id, metadata')
         .eq('id', fileId)
         .single()
 

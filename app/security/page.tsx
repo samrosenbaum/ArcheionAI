@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
 import { 
@@ -15,8 +16,6 @@ import {
   Eye,
   EyeOff,
   Key,
-  Smartphone,
-  Mail,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -24,8 +23,7 @@ import {
   Globe,
   Settings,
   Download,
-  Trash2,
-  Plus
+  Trash2
 } from "lucide-react"
 
 export default function SecurityPage() {

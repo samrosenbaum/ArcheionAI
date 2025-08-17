@@ -185,18 +185,7 @@ export default function CategoryPage() {
     return matchesSearch && matchesSubcategory
   })
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-slate-100 text-slate-900 border-slate-300"
-      case "medium":
-        return "bg-slate-50 text-slate-700 border-slate-200"
-      case "low":
-        return "bg-slate-100 text-slate-800 border-slate-300"
-      default:
-        return "bg-slate-100 text-slate-800 border-slate-300"
-    }
-  }
+
 
   if (!category) {
     return (

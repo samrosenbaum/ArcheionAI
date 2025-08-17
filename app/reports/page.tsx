@@ -12,13 +12,10 @@ import {
   BarChart3,
   TrendingUp,
   TrendingDown,
-  PieChart,
   Calendar,
   Download,
   Filter,
   Search,
-  Eye,
-  FileText,
   Shield,
   Home,
   Car,
@@ -242,7 +239,7 @@ export default function ReportsPage() {
           <Card className="border border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-slate-700" />
+                <BarChart3 className="h-5 w-5 text-slate-700" />
                 <span>Total Documents</span>
               </CardTitle>
             </CardHeader>

@@ -9,21 +9,13 @@ import {
   Home,
   BarChart3,
   FileText,
-  Shield,
-  TrendingUp,
-  Coins,
-  Briefcase,
-  Users,
-  GraduationCap,
-  Bell,
   Menu,
   X,
   ChevronDown,
   Upload,
   Plus,
   Search,
-  MessageSquare,
-  Camera
+  AlertTriangle
 } from "lucide-react"
 
 interface NavigationProps {
@@ -117,7 +109,7 @@ export function Navigation({ showMobileMenu, onMobileMenuToggle }: NavigationPro
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative"
           >
-            <Bell className="h-5 w-5" />
+            <AlertTriangle className="h-5 w-5" />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
           </Button>
           
