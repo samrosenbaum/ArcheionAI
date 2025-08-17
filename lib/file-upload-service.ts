@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { DocumentParser } from './document-parser'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -71,6 +72,8 @@ export class FileUploadService {
     options: FileUploadOptions = {}
   ): Promise<UploadedFile> {
     try {
+      console.log('FileUploadService.uploadFile called with:', { file: file.name, userId, options })
+      
       // Validate file
       const validation = this.validateFile(file)
       if (!validation.valid) {
@@ -82,20 +85,10 @@ export class FileUploadService {
       const fileExtension = file.name.split('.').pop()
       const fileName = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`
       const filePath = `${userId}/${fileName}`
+      
+      console.log('Generated file path:', filePath)
 
-      // Upload to Supabase storage
-      const { data: _data, error } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
-
-      if (error) {
-        throw new Error(`Upload failed: ${error.message}`)
-      }
-
-      // Create document record in database
+      // First, create the document record in database
       const documentData = {
         user_id: userId,
         name: file.name,
@@ -113,6 +106,8 @@ export class FileUploadService {
           assetId: options.assetId || null
         }
       }
+      
+      console.log('Document data to insert:', documentData)
 
       const { data: docData, error: docError } = await supabase
         .from('documents')
@@ -121,10 +116,54 @@ export class FileUploadService {
         .single()
 
       if (docError) {
-        // Clean up uploaded file if database insert fails
-        await supabase.storage.from('documents').remove([filePath])
+        console.error('Database insert error:', docError)
         throw new Error(`Database insert failed: ${docError.message}`)
       }
+      
+      console.log('Database insert successful:', docData)
+
+      // Now upload to Supabase storage
+      console.log('Attempting to upload to Supabase storage...')
+      const { data: _data, error } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (error) {
+        console.error('Storage upload error:', error)
+        
+        // Clean up database record if storage upload fails
+        await supabase
+          .from('documents')
+          .delete()
+          .eq('id', docData.id)
+        
+        throw new Error(`Upload failed: ${error.message}`)
+      }
+      
+      console.log('Storage upload successful')
+
+      // Parse the document to extract insights
+      try {
+        console.log('Starting document parsing...')
+        const parsedDocument = await DocumentParser.parseDocument(file, userId)
+        
+        // Save parsing results to database
+        await DocumentParser.saveParsedDocument(docData.id, parsedDocument, userId)
+        
+        console.log('Document parsing and saving completed')
+      } catch (parseError) {
+        console.warn('Document parsing failed, continuing with upload:', parseError)
+        // Don't fail the upload if parsing fails
+      }
+
+      // Update document status to completed
+      await supabase
+        .from('documents')
+        .update({ status: 'completed' })
+        .eq('id', docData.id)
 
       // Return the uploaded file object
       return {
@@ -184,7 +223,6 @@ export class FileUploadService {
       if (dbError) {
         throw new Error(`Database deletion failed: ${dbError.message}`)
       }
-
     } catch (error) {
       console.error('File deletion error:', error)
       throw error
@@ -198,7 +236,7 @@ export class FileUploadService {
         .createSignedUrl(filePath, 3600) // 1 hour expiry
 
       if (error) {
-        throw new Error(`Failed to get file URL: ${error.message}`)
+        throw new Error(`Failed to generate signed URL: ${error.message}`)
       }
 
       return data.signedUrl
@@ -208,21 +246,54 @@ export class FileUploadService {
     }
   }
 
-  static async getUserDocuments(userId: string): Promise<any[]> {
+  static async updateFileMetadata(
+    fileId: string,
+    userId: string,
+    metadata: Partial<{
+      name: string
+      category: string
+      subcategory: string
+      tags: string[]
+      description: string
+    }>
+  ): Promise<void> {
     try {
-      const { data, error } = await supabase
+      // Verify user owns the file
+      const { data: doc, error: fetchError } = await supabase
         .from('documents')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .select('user_id')
+        .eq('id', fileId)
+        .single()
 
-      if (error) {
-        throw new Error(`Failed to fetch documents: ${error.message}`)
+      if (fetchError || !doc) {
+        throw new Error('Document not found')
       }
 
-      return data || []
+      if (doc.user_id !== userId) {
+        throw new Error('Unauthorized to update this file')
+      }
+
+      // Update metadata
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update({
+          name: metadata.name,
+          category: metadata.category,
+          subcategory: metadata.subcategory,
+          tags: metadata.tags,
+          metadata: {
+            ...doc.metadata,
+            description: metadata.description,
+            updatedAt: new Date().toISOString()
+          }
+        })
+        .eq('id', fileId)
+
+      if (updateError) {
+        throw new Error(`Update failed: ${updateError.message}`)
+      }
     } catch (error) {
-      console.error('Get user documents error:', error)
+      console.error('Update file metadata error:', error)
       throw error
     }
   }

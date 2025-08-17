@@ -14,7 +14,6 @@ import {
   Camera,
   MessageSquare,
   Zap,
-  Lock,
   BarChart3
 } from "lucide-react"
 import Link from "next/link"
@@ -53,13 +52,6 @@ export default function LandingPage() {
     { icon: Briefcase, name: "Business", color: "bg-slate-700" }
   ]
 
-  const stats = [
-    { number: "99.9%", label: "Uptime" },
-    { number: "256-bit", label: "Encryption" },
-    { number: "24/7", label: "Monitoring" },
-    { number: "SOC 2", label: "Compliant" }
-  ]
-
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -86,11 +78,6 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23e2e8f0%22%20fill-opacity%3D%220.4%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
         
         <div className="relative max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-medium mb-8">
-            <Lock className="w-4 h-4 mr-2" />
-            Enterprise-Grade Security
-          </div>
-          
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-900 mb-8 leading-tight">
             CFO-Level Oversight for
             <span className="block text-slate-600"> Your Life Admin</span>
@@ -116,12 +103,7 @@ export default function LandingPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl font-bold text-slate-900 mb-2">{stat.number}</div>
-                <div className="text-sm text-slate-600">{stat.label}</div>
-              </div>
-            ))}
+            {/* Removed stats section as per edit hint */}
           </div>
         </div>
       </section>

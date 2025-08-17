@@ -284,7 +284,7 @@ export default function OnboardingPage() {
                           {uploadedFile.size > 0 ? formatFileSize(uploadedFile.size) : 'Processing...'}
                         </p>
                       </div>
-                      <Badge className="bg-green-100 text-green-800">
+                      <Badge className="bg-slate-100 text-slate-900 border-slate-300">
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Uploaded
                       </Badge>
@@ -317,49 +317,49 @@ export default function OnboardingPage() {
             </div>
             <div className="max-w-4xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0">
+                <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-0">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                      <Brain size={20} className="text-blue-600" />
+                      <Brain size={20} className="text-slate-700" />
                       <span>AI Analysis</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-3 text-sm">
                       <li className="flex items-center space-x-2">
-                        <CheckCircle size={16} className="text-blue-600" />
+                        <CheckCircle size={16} className="text-slate-700" />
                         <span>Automatic document categorization</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <CheckCircle size={16} className="text-blue-600" />
+                        <CheckCircle size={16} className="text-slate-700" />
                         <span>Key information extraction</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <CheckCircle size={16} className="text-blue-600" />
+                        <CheckCircle size={16} className="text-slate-700" />
                         <span>Deadline and renewal tracking</span>
                       </li>
                     </ul>
                   </CardContent>
                 </Card>
-                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0">
+                <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-0">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
-                      <Target size={20} className="text-purple-600" />
+                      <Target size={20} className="text-slate-700" />
                       <span>Smart Insights</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-3 text-sm">
                       <li className="flex items-center space-x-2">
-                        <CheckCircle size={16} className="text-purple-600" />
+                        <CheckCircle size={16} className="text-slate-700" />
                         <span>Cost optimization opportunities</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <CheckCircle size={16} className="text-purple-600" />
+                        <CheckCircle size={16} className="text-slate-700" />
                         <span>Risk assessment alerts</span>
                       </li>
                       <li className="flex items-center space-x-2">
-                        <CheckCircle size={16} className="text-purple-600" />
+                        <CheckCircle size={16} className="text-slate-700" />
                         <span>Portfolio performance tracking</span>
                       </li>
                     </ul>

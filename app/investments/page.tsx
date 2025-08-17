@@ -162,10 +162,10 @@ export default function InvestmentsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'sold': return 'bg-slate-100 text-slate-800'
-      default: return 'bg-slate-100 text-slate-800'
+      case 'active': return 'bg-slate-100 text-slate-900 border-slate-300'
+      case 'pending': return 'bg-slate-50 text-slate-700 border-slate-200'
+      case 'sold': return 'bg-slate-100 text-slate-800 border-slate-300'
+      default: return 'bg-slate-100 text-slate-800 border-slate-300'
     }
   }
 
@@ -187,9 +187,9 @@ export default function InvestmentsPage() {
   }
 
   const getChangeColor = (change: number) => {
-    if (change > 0) return 'text-green-600'
-    if (change < 0) return 'text-red-600'
-    return 'text-slate-600'
+    if (change > 0) return 'text-slate-900'
+    if (change < 0) return 'text-slate-600'
+    return 'text-slate-500'
   }
 
   const getChangeIcon = (change: number) => {
@@ -230,28 +230,28 @@ export default function InvestmentsPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="border-0 shadow-sm">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <BarChart3 className="h-5 w-5 text-blue-600" />
+                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <BarChart3 className="h-6 w-6 text-slate-700" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-600">Total Value</p>
+                    <p className="text-sm text-slate-500">Total Value</p>
                     <p className="text-2xl font-bold text-slate-900">{formatCurrency(totalValue)}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-5 w-5 text-green-600" />
+                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-slate-700" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-600">Total Gain/Loss</p>
+                    <p className="text-sm text-slate-500">Total Gain/Loss</p>
                     <p className={`text-2xl font-bold ${getChangeColor(totalGainLoss)}`}>
                       {formatCurrency(totalGainLoss)}
                     </p>
@@ -260,14 +260,14 @@ export default function InvestmentsPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <PieChart className="h-5 w-5 text-purple-600" />
+                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <PieChart className="h-6 w-6 text-slate-700" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-600">Return %</p>
+                    <p className="text-sm text-slate-500">Return %</p>
                     <p className={`text-2xl font-bold ${getChangeColor(totalGainLossPercent)}`}>
                       {totalGainLossPercent.toFixed(2)}%
                     </p>
@@ -276,14 +276,14 @@ export default function InvestmentsPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-orange-600" />
+                  <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-slate-700" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-600">Total Documents</p>
+                    <p className="text-sm text-slate-500">Total Documents</p>
                     <p className="text-2xl font-bold text-slate-900">
                       {investments.reduce((sum, inv) => sum + inv.documents, 0)}
                     </p>

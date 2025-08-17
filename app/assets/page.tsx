@@ -62,15 +62,15 @@ export default function AssetsPage() {
 
   const categories = [
     { id: "all", name: "All Assets", icon: Grid, color: "bg-slate-600" },
-    { id: "real-estate", name: "Real Estate", icon: Home, color: "bg-blue-600" },
-    { id: "investments", name: "Investments", icon: TrendingUp, color: "bg-green-600" },
-    { id: "crypto", name: "Cryptocurrency", icon: Coins, color: "bg-orange-600" },
-    { id: "business", name: "Business & LLCs", icon: Briefcase, color: "bg-purple-600" },
-    { id: "insurance", name: "Insurance", icon: Shield, color: "bg-red-600" },
-    { id: "tax", name: "Tax Documents", icon: FileText, color: "bg-indigo-600" },
-    { id: "vehicles", name: "Vehicles", icon: Car, color: "bg-teal-600" },
-    { id: "family", name: "Family Documents", icon: Users, color: "bg-pink-600" },
-    { id: "trusts", name: "Trusts & Estates", icon: Crown, color: "bg-amber-600" }
+    { id: "real-estate", name: "Real Estate", icon: Home, color: "bg-slate-600" },
+    { id: "investments", name: "Investments", icon: TrendingUp, color: "bg-slate-600" },
+    { id: "crypto", name: "Cryptocurrency", icon: Coins, color: "bg-slate-600" },
+    { id: "business", name: "Business & LLCs", icon: Briefcase, color: "bg-slate-600" },
+    { id: "insurance", name: "Insurance", icon: Shield, color: "bg-slate-600" },
+    { id: "tax", name: "Tax Documents", icon: FileText, color: "bg-slate-600" },
+    { id: "vehicles", name: "Vehicles", icon: Car, color: "bg-slate-600" },
+    { id: "family", name: "Family Documents", icon: Users, color: "bg-slate-600" },
+    { id: "trusts", name: "Trusts & Estates", icon: Crown, color: "bg-slate-600" }
   ]
 
   const assets: Asset[] = [
@@ -227,11 +227,11 @@ export default function AssetsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'expired': return 'bg-red-100 text-red-800'
-      case 'review': return 'bg-blue-100 text-blue-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'active': return 'bg-slate-100 text-slate-900 border-slate-300'
+      case 'pending': return 'bg-slate-50 text-slate-700 border-slate-200'
+      case 'expired': return 'bg-slate-100 text-slate-800 border-slate-300'
+      case 'review': return 'bg-slate-100 text-slate-800 border-slate-300'
+      default: return 'bg-slate-100 text-slate-800 border-slate-300'
     }
   }
 
@@ -285,44 +285,44 @@ export default function AssetsPage() {
           
           {/* Portfolio Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-blue-600 mb-1">Total Portfolio Value</p>
-                    <p className="text-2xl font-bold text-blue-900">{formatCurrency(totalAssetsValue)}</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1">Total Portfolio Value</p>
+                    <p className="text-2xl font-bold text-slate-900">{formatCurrency(totalAssetsValue)}</p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
                     <DollarSign className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-green-100">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-green-600 mb-1">Total Assets</p>
-                    <p className="text-2xl font-bold text-green-900">{assets.length}</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1">Total Assets</p>
+                    <p className="text-2xl font-bold text-slate-900">{assets.length}</p>
                   </div>
-                  <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
                     <BarChart3 className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-50 to-orange-100">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-orange-600 mb-1">Portfolio Change</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1">Portfolio Change</p>
                     <div className="flex items-center space-x-2">
-                      <p className="text-2xl font-bold text-orange-900">
+                      <p className="text-2xl font-bold text-slate-900">
                         {formatCurrency(Math.abs(totalChange))}
                       </p>
-                      <div className={`flex items-center space-x-1 ${totalChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <div className={`flex items-center space-x-1 ${totalChange >= 0 ? 'text-slate-900' : 'text-slate-600'}`}>
                         {totalChange >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
                         <span className="text-sm font-medium">
                           {percentageChange.toFixed(1)}%
@@ -330,7 +330,7 @@ export default function AssetsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="w-12 h-12 bg-orange-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
                     <Activity className="w-6 h-6 text-white" />
                   </div>
                 </div>

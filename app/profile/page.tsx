@@ -109,12 +109,11 @@ export default function ProfilePage() {
     }))
   }
 
-  const getPlanColor = (plan: string) => {
-    switch (plan) {
-      case 'basic': return 'bg-slate-100 text-slate-800'
-      case 'premium': return 'bg-blue-100 text-blue-800'
-      case 'enterprise': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-slate-100 text-slate-800'
+  const getTierColor = (tier: string) => {
+    switch (tier) {
+      case 'premium': return 'bg-slate-100 text-slate-900 border-slate-300'
+      case 'enterprise': return 'bg-slate-100 text-slate-800 border-slate-300'
+      default: return 'bg-slate-100 text-slate-800 border-slate-300'
     }
   }
 
@@ -242,7 +241,7 @@ export default function ProfilePage() {
                         {profile.firstName} {profile.lastName}
                       </h3>
                       <p className="text-slate-600">{profile.occupation}</p>
-                      <Badge className={getPlanColor(profile.subscription.plan)}>
+                      <Badge className={getTierColor(profile.subscription.plan)}>
                         {getPlanIcon(profile.subscription.plan)}
                         <span className="ml-1 capitalize">{profile.subscription.plan}</span>
                       </Badge>
@@ -507,15 +506,15 @@ export default function ProfilePage() {
                   <CardDescription>Manage your subscription and billing</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="p-6 border rounded-lg bg-gradient-to-br from-blue-50 to-blue-100">
+                  <div className="p-6 border border-slate-200 rounded-lg bg-slate-50">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h4 className="text-lg font-semibold text-blue-900">
+                        <h4 className="text-lg font-semibold text-slate-900">
                           {profile.subscription.plan.charAt(0).toUpperCase() + profile.subscription.plan.slice(1)} Plan
                         </h4>
-                        <p className="text-blue-700">Next billing: {new Date(profile.subscription.nextBilling).toLocaleDateString()}</p>
+                        <p className="text-slate-700">Next billing: {new Date(profile.subscription.nextBilling).toLocaleDateString()}</p>
                       </div>
-                      <Badge className={getPlanColor(profile.subscription.plan)}>
+                      <Badge className={getTierColor(profile.subscription.plan)}>
                         {getPlanIcon(profile.subscription.plan)}
                         <span className="ml-1 capitalize">{profile.subscription.plan}</span>
                       </Badge>
@@ -539,12 +538,12 @@ export default function ProfilePage() {
                         <p className="text-sm text-slate-600">per month</p>
                       </CardContent>
                     </Card>
-                    <Card className="border-0 shadow-sm border-blue-200 bg-blue-50">
+                    <Card className="border border-slate-200 shadow-sm bg-slate-50">
                       <CardContent className="p-4 text-center">
-                        <Crown className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                        <h4 className="font-medium text-blue-900">Premium</h4>
-                        <p className="text-2xl font-bold text-blue-900">$99</p>
-                        <p className="text-sm text-blue-600">per month</p>
+                        <Crown className="h-8 w-8 text-slate-600 mx-auto mb-2" />
+                        <h4 className="font-medium text-slate-900">Premium</h4>
+                        <p className="text-2xl font-bold text-slate-900">$99</p>
+                        <p className="text-sm text-slate-600">per month</p>
                       </CardContent>
                     </Card>
                     <Card className="border-0 shadow-sm">

@@ -14,6 +14,7 @@ import {
   Coins,
   Briefcase,
   Users,
+  GraduationCap,
   Bell,
   Menu,
   X,
@@ -32,20 +33,13 @@ interface NavigationProps {
 
 const mainNavItems = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Assets", href: "/assets", icon: BarChart3 },
   { name: "Documents", href: "/documents", icon: FileText },
-  { name: "Insurance", href: "/insurance", icon: Shield },
-  { name: "Investments", href: "/investments", icon: TrendingUp },
-  { name: "Crypto", href: "/crypto", icon: Coins },
-  { name: "Business", href: "/business", icon: Briefcase },
-  { name: "Family", href: "/family", icon: Users },
+  { name: "Assets", href: "/assets", icon: BarChart3 },
+  { name: "Add Asset", href: "/add-asset", icon: Plus, variant: "default" as const },
 ]
 
 const quickActions = [
   { name: "Upload Document", href: "/upload", icon: Upload },
-  { name: "Add Asset", href: "/assets/new", icon: Plus },
-  { name: "Photo Capture", href: "/capture", icon: Camera },
-  { name: "SMS Upload", href: "/sms-upload", icon: MessageSquare },
 ]
 
 export function Navigation({ showMobileMenu, onMobileMenuToggle }: NavigationProps) {
@@ -66,6 +60,21 @@ export function Navigation({ showMobileMenu, onMobileMenuToggle }: NavigationPro
       <nav className="hidden lg:flex items-center space-x-8">
         {mainNavItems.map((item) => {
           const IconComponent = item.icon
+          const isAddAsset = item.name === "Add Asset"
+          
+          if (isAddAsset) {
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+              >
+                <IconComponent className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            )
+          }
+          
           return (
             <Link
               key={item.name}
@@ -210,6 +219,22 @@ export function Navigation({ showMobileMenu, onMobileMenuToggle }: NavigationPro
                 <div className="space-y-2">
                   {mainNavItems.map((item) => {
                     const IconComponent = item.icon
+                    const isAddAsset = item.name === "Add Asset"
+                    
+                    if (isAddAsset) {
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          onClick={onMobileMenuToggle}
+                          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+                        >
+                          <IconComponent className="h-4 w-4" />
+                          <span>{item.name}</span>
+                        </Link>
+                      )
+                    }
+                    
                     return (
                       <Link
                         key={item.name}
@@ -218,7 +243,7 @@ export function Navigation({ showMobileMenu, onMobileMenuToggle }: NavigationPro
                         className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isActive(item.href)
                             ? "bg-slate-100 text-slate-900"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                            : "text-slate-900 hover:text-slate-900 hover:bg-slate-50"
                         }`}
                       >
                         <IconComponent className="h-4 w-4" />

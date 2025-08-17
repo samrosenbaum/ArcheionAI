@@ -238,40 +238,44 @@ export default function HelpPage() {
           <div className="lg:col-span-3 space-y-6">
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+              <Card className="border border-slate-200 shadow-sm">
                 <CardContent className="p-6 text-center">
-                  <BookOpen className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                  <BookOpen className="h-12 w-12 text-slate-700 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-slate-900 mb-2">Documentation</h3>
                   <p className="text-slate-600 text-sm mb-4">
                     Comprehensive guides and tutorials
                   </p>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" className="w-full">
                     Browse Docs
                   </Button>
                 </CardContent>
               </Card>
+            </div>
 
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="border border-slate-200 shadow-sm">
                 <CardContent className="p-6 text-center">
-                  <Video className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                  <Video className="h-12 w-12 text-slate-700 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-slate-900 mb-2">Video Tutorials</h3>
                   <p className="text-slate-600 text-sm mb-4">
                     Step-by-step video guides
                   </p>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" className="w-full">
                     Watch Videos
                   </Button>
                 </CardContent>
               </Card>
+            </div>
 
-              <Card className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="border border-slate-200 shadow-sm">
                 <CardContent className="p-6 text-center">
-                  <Users className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+                  <Users className="h-12 w-12 text-slate-700 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-slate-900 mb-2">Community</h3>
                   <p className="text-slate-600 text-sm mb-4">
                     Connect with other users
                   </p>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" className="w-full">
                     Join Community
                   </Button>
                 </CardContent>
@@ -433,9 +437,9 @@ export default function HelpPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-4 border rounded-lg">
+                  <div className="p-4 border border-slate-200 rounded-lg">
                     <div className="flex items-center gap-3 mb-3">
-                      <MessageSquare className="h-5 w-5 text-blue-600" />
+                      <MessageSquare className="h-5 w-5 text-slate-700" />
                       <h4 className="font-medium text-slate-900">Live Chat</h4>
                     </div>
                     <p className="text-sm text-slate-600 mb-3">
@@ -446,9 +450,9 @@ export default function HelpPage() {
                     </Button>
                   </div>
 
-                  <div className="p-4 border rounded-lg">
+                  <div className="p-4 border border-slate-200 rounded-lg">
                     <div className="flex items-center gap-3 mb-3">
-                      <Phone className="h-5 w-5 text-green-600" />
+                      <Phone className="h-5 w-5 text-slate-700" />
                       <h4 className="font-medium text-slate-900">Phone Support</h4>
                     </div>
                     <p className="text-sm text-slate-600 mb-3">
@@ -459,9 +463,9 @@ export default function HelpPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg">
+                  <div className="p-4 border border-slate-200 rounded-lg">
                     <div className="flex items-center gap-3 mb-3">
-                      <Mail className="h-5 w-5 text-purple-600" />
+                      <Mail className="h-5 w-5 text-slate-700" />
                       <h4 className="font-medium text-slate-900">Email Support</h4>
                     </div>
                     <p className="text-sm text-slate-600 mb-3">
@@ -472,9 +476,9 @@ export default function HelpPage() {
                     </p>
                   </div>
 
-                  <div className="p-4 border rounded-lg">
+                  <div className="p-4 border border-slate-200 rounded-lg">
                     <div className="flex items-center gap-3 mb-3">
-                      <Clock className="h-5 w-5 text-orange-600" />
+                      <Clock className="h-5 w-5 text-slate-700" />
                       <h4 className="font-medium text-slate-900">Response Times</h4>
                     </div>
                     <p className="text-sm text-slate-600 mb-3">

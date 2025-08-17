@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
 import { FileUploadService, UploadedFile, FileUploadOptions } from "@/lib/file-upload-service"
+import { DocumentParser, ParsedDocument } from "@/lib/document-parser"
 import { useMockAuth } from "@/lib/auth-context"
 import { 
   Upload,
@@ -24,7 +25,14 @@ import {
   Eye,
   Download,
   Share2,
-  Mail
+  Mail,
+  Edit,
+  Save,
+  X,
+  Brain,
+  Calendar,
+  DollarSign,
+  Tag
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -33,6 +41,9 @@ export default function UploadPage() {
   const [uploadMethod, setUploadMethod] = useState<'drag-drop' | 'camera' | 'sms' | 'email'>('drag-drop')
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [dragActive, setDragActive] = useState(false)
+  const [editingFile, setEditingFile] = useState<string | null>(null)
+  const [parsingResults, setParsingResults] = useState<Record<string, ParsedDocument>>({})
+  const [isParsing, setIsParsing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const { user } = useMockAuth()
@@ -62,6 +73,11 @@ export default function UploadPage() {
       id: "insurance",
       name: "Insurance",
       subcategories: ["Auto Insurance", "Home Insurance", "Life Insurance", "Umbrella Policy", "Health Insurance"]
+    },
+    {
+      id: "career",
+      name: "Career & Licenses",
+      subcategories: ["Professional Licenses", "Certifications", "Continuing Education", "Training Records", "Performance Reviews"]
     },
     {
       id: "tax",
@@ -106,16 +122,20 @@ export default function UploadPage() {
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File input change event:', e.target.files) // Debug log
     if (e.target.files) {
       handleFiles(e.target.files)
     }
   }
 
   const handleFiles = async (files: FileList) => {
+    console.log('Handling files:', files.length, 'files') // Debug log
     
     try {
       for (const file of Array.from(files)) {
-        // Create initial file object
+        console.log('Processing file:', file.name, file.size, file.type) // Debug log
+        
+        // Create initial file object with original name
         const newFile: UploadedFile = {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
@@ -132,6 +152,9 @@ export default function UploadPage() {
         
         setUploadedFiles(prev => [...prev, newFile])
         
+        // Start parsing the document
+        await parseDocument(file, newFile.id)
+        
         try {
           // Upload file using the service
           const uploadOptions: FileUploadOptions = {
@@ -142,7 +165,12 @@ export default function UploadPage() {
             assetId: newFile.assetId
           }
           
+          console.log('Starting upload with options:', uploadOptions) // Debug log
+          console.log('User ID:', user.id) // Debug log
+          
           const uploadedFile = await FileUploadService.uploadFile(file, user.id, uploadOptions)
+          
+          console.log('Upload successful:', uploadedFile) // Debug log
           
           // Update the file with the uploaded data
           setUploadedFiles(prev => prev.map(f => 
@@ -151,7 +179,7 @@ export default function UploadPage() {
           
           toast({
             title: "Upload successful",
-            description: `${file.name} has been uploaded successfully.`,
+            description: `${file.name} has been uploaded and parsed successfully.`,
           })
           
         } catch (error) {
@@ -171,9 +199,72 @@ export default function UploadPage() {
           })
         }
       }
-    } finally {
-      
+    } catch (error) {
+      console.error('File handling error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to process files",
+        variant: "destructive",
+      })
     }
+  }
+
+  const parseDocument = async (file: File, fileId: string) => {
+    try {
+      setIsParsing(true)
+      console.log('Starting document parsing for:', file.name)
+      
+      const parsedDocument = await DocumentParser.parseDocument(file, user.id)
+      setParsingResults(prev => ({ ...prev, [fileId]: parsedDocument }))
+      
+      // Auto-categorize based on parsing results
+      if (parsedDocument.extractedData.categories.length > 0) {
+        const primaryCategory = parsedDocument.extractedData.categories[0]
+        const category = categories.find(cat => cat.id === primaryCategory)
+        
+        if (category) {
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === fileId 
+              ? { ...f, category: category.name, subcategory: category.subcategories[0] || '' }
+              : f
+          ))
+        }
+      }
+      
+      console.log('Document parsing completed:', parsedDocument)
+      
+    } catch (error) {
+      console.error('Document parsing error:', error)
+      toast({
+        title: "Parsing failed",
+        description: "Failed to parse document content",
+        variant: "destructive",
+      })
+    } finally {
+      setIsParsing(false)
+    }
+  }
+
+  const startEditing = (fileId: string) => {
+    setEditingFile(fileId)
+  }
+
+  const saveEditing = (fileId: string) => {
+    setEditingFile(null)
+    toast({
+      title: "File updated",
+      description: "File information has been updated successfully.",
+    })
+  }
+
+  const cancelEditing = () => {
+    setEditingFile(null)
+  }
+
+  const updateFileMetadata = (fileId: string, field: keyof UploadedFile, value: any) => {
+    setUploadedFiles(prev => prev.map(file => 
+      file.id === fileId ? { ...file, [field]: value } : file
+    ))
   }
 
   const formatFileSize = (bytes: number): string => {
@@ -196,22 +287,21 @@ export default function UploadPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'uploading': return 'bg-blue-100 text-blue-800'
-      case 'processing': return 'bg-yellow-100 text-yellow-800'
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'error': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'uploading': return 'bg-slate-100 text-slate-900 border-slate-300'
+      case 'processing': return 'bg-slate-50 text-slate-700 border-slate-200'
+      case 'completed': return 'bg-slate-100 text-slate-800 border-slate-300'
+      case 'error': return 'bg-slate-100 text-slate-800 border-slate-300'
+      default: return 'bg-slate-100 text-slate-800 border-slate-300'
     }
   }
 
   const removeFile = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId))
-  }
-
-  const updateFileMetadata = (fileId: string, field: keyof UploadedFile, value: any) => {
-    setUploadedFiles(prev => prev.map(file => 
-      file.id === fileId ? { ...file, [field]: value } : file
-    ))
+    setParsingResults(prev => {
+      const newResults = { ...prev }
+      delete newResults[fileId]
+      return newResults
+    })
   }
 
   const handleDownload = async (file: UploadedFile) => {
@@ -263,7 +353,7 @@ export default function UploadPage() {
             Upload Documents
           </h1>
           <p className="text-slate-600">
-            Securely add documents to your vault with intelligent categorization
+            Securely add documents to your vault with intelligent categorization and parsing
           </p>
         </div>
 
@@ -281,7 +371,7 @@ export default function UploadPage() {
                   <Button
                     variant={uploadMethod === 'drag-drop' ? 'default' : 'outline'}
                     onClick={() => setUploadMethod('drag-drop')}
-                    className="flex flex-col items-center gap-2 h-24"
+                    className="h-20 flex-col space-y-2"
                   >
                     <Upload className="h-6 w-6" />
                     <span className="text-sm">Drag & Drop</span>
@@ -290,25 +380,25 @@ export default function UploadPage() {
                   <Button
                     variant={uploadMethod === 'camera' ? 'default' : 'outline'}
                     onClick={() => setUploadMethod('camera')}
-                    className="flex flex-col items-center gap-2 h-24"
+                    className="h-20 flex-col space-y-2"
                   >
                     <Camera className="h-6 w-6" />
-                    <span className="text-sm">Photo Capture</span>
+                    <span className="text-sm">Camera</span>
                   </Button>
                   
                   <Button
                     variant={uploadMethod === 'sms' ? 'default' : 'outline'}
                     onClick={() => setUploadMethod('sms')}
-                    className="flex flex-col items-center gap-2 h-24"
+                    className="h-20 flex-col space-y-2"
                   >
                     <MessageSquare className="h-6 w-6" />
-                    <span className="text-sm">SMS Upload</span>
+                    <span className="text-sm">SMS</span>
                   </Button>
                   
                   <Button
                     variant={uploadMethod === 'email' ? 'default' : 'outline'}
                     onClick={() => setUploadMethod('email')}
-                    className="flex flex-col items-center gap-2 h-24"
+                    className="h-20 flex-col space-y-2"
                   >
                     <Mail className="h-6 w-6" />
                     <span className="text-sm">Email</span>
@@ -317,18 +407,14 @@ export default function UploadPage() {
               </CardContent>
             </Card>
 
-            {/* Drag & Drop Upload */}
+            {/* Drag & Drop Upload Area */}
             {uploadMethod === 'drag-drop' && (
               <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Drag & Drop Files</CardTitle>
-                  <CardDescription>Drop your documents here or click to browse</CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="p-8">
                   <div
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                       dragActive 
-                        ? 'border-blue-500 bg-blue-50' 
+                        ? 'border-slate-400 bg-slate-50' 
                         : 'border-slate-300 hover:border-slate-400'
                     }`}
                     onDragEnter={handleDrag}
@@ -337,13 +423,16 @@ export default function UploadPage() {
                     onDrop={handleDrop}
                   >
                     <Upload className="h-12 w-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-lg font-medium text-slate-900 mb-2">
-                      Drop files here
-                    </p>
+                    <h3 className="text-lg font-medium text-slate-900 mb-2">
+                      Drop files here or click to browse
+                    </h3>
                     <p className="text-slate-600 mb-4">
-                      or click to browse your computer
+                      Upload PDFs, images, and documents up to 50MB
                     </p>
-                    <Button onClick={() => fileInputRef.current?.click()}>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-slate-900 hover:bg-slate-800"
+                    >
                       Choose Files
                     </Button>
                     <input
@@ -352,7 +441,7 @@ export default function UploadPage() {
                       multiple
                       onChange={handleFileSelect}
                       className="hidden"
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+                      accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.txt,.xls,.xlsx"
                     />
                   </div>
                 </CardContent>
@@ -362,20 +451,15 @@ export default function UploadPage() {
             {/* Camera Upload */}
             {uploadMethod === 'camera' && (
               <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Photo Capture</CardTitle>
-                  <CardDescription>Take photos of your documents</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12">
-                    <Camera className="h-16 w-16 text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-600 mb-4">
-                      Camera functionality will be available in the mobile app
-                    </p>
-                    <Button variant="outline">
-                      Open Camera
-                    </Button>
-                  </div>
+                <CardContent className="p-8 text-center">
+                  <Camera className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">Camera Upload</h3>
+                  <p className="text-slate-600 mb-4">
+                    Take photos of documents directly from your device
+                  </p>
+                  <Button className="bg-slate-900 hover:bg-slate-800">
+                    Open Camera
+                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -383,23 +467,16 @@ export default function UploadPage() {
             {/* SMS Upload */}
             {uploadMethod === 'sms' && (
               <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle>SMS Document Upload</CardTitle>
-                  <CardDescription>Send documents via text message</CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="p-8 text-center">
+                  <MessageSquare className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">SMS Upload</h3>
+                  <p className="text-slate-600 mb-4">
+                    Send documents via text message to our secure number
+                  </p>
                   <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input id="phone" placeholder="+1 (555) 123-4567" />
-                    </div>
-                    <div>
-                      <Label htmlFor="message">Message (Optional)</Label>
-                      <Textarea id="message" placeholder="Add context about this document..." />
-                    </div>
-                    <Button className="w-full">
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Send Upload Instructions
+                    <Input placeholder="Enter your phone number" />
+                    <Button className="bg-slate-900 hover:bg-slate-800 w-full">
+                      Get Upload Number
                     </Button>
                   </div>
                 </CardContent>
@@ -409,278 +486,277 @@ export default function UploadPage() {
             {/* Email Upload */}
             {uploadMethod === 'email' && (
               <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Email Document Upload</CardTitle>
-                  <CardDescription>Send documents via email</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input id="email" placeholder="documents@archeion.com" />
-                    </div>
-                    <div>
-                      <Label htmlFor="subject">Subject (Optional)</Label>
-                      <Input id="subject" placeholder="Document upload" />
-                    </div>
-                    <div>
-                      <Label htmlFor="emailMessage">Message (Optional)</Label>
-                      <Textarea id="emailMessage" placeholder="Add context about this document..." />
-                    </div>
-                    <Button className="w-full">
-                      <Mail className="h-4 w-4 mr-2" />
-                      Send Upload Instructions
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Uploaded Files */}
-            {uploadedFiles.length > 0 && (
-              <Card className="border-0 shadow-sm">
-                <CardHeader>
-                  <CardTitle>Uploaded Files</CardTitle>
-                  <CardDescription>Manage and categorize your documents</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {uploadedFiles.map((file) => (
-                      <div key={file.id} className="border rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <FileText className="h-8 w-8 text-slate-400" />
-                            <div>
-                              <p className="font-medium text-slate-900">{file.name}</p>
-                              <p className="text-sm text-slate-500">{formatFileSize(file.size)} • {file.type}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={getStatusColor(file.status)}>
-                              {getStatusIcon(file.status)}
-                              <span className="ml-1 capitalize">{file.status}</span>
-                            </Badge>
-                            {file.status === 'completed' && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDownload(file)}
-                                title="Download file"
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeFile(file.id)}
-                              title="Remove file"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {file.status === 'error' && (
-                          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-sm text-red-700">
-                              <AlertTriangle className="h-4 w-4 inline mr-2" />
-                              {file.error || 'Upload failed'}
-                            </p>
-                          </div>
-                        )}
-
-                        {file.status === 'uploading' && (
-                          <div className="mb-4">
-                            <div className="flex justify-between text-sm text-slate-600 mb-1">
-                              <span>Uploading...</span>
-                              <span>{Math.round(file.progress)}%</span>
-                            </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2">
-                              <div 
-                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${file.progress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                        )}
-
-                        {file.status === 'completed' && (
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <Label htmlFor={`category-${file.id}`}>Category</Label>
-                                <Select
-                                  value={file.category}
-                                  onValueChange={(value) => updateFileMetadata(file.id, 'category', value)}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select category" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {categories.map((cat) => (
-                                      <SelectItem key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              
-                              <div>
-                                <Label htmlFor={`subcategory-${file.id}`}>Subcategory</Label>
-                                <Select
-                                  value={file.subcategory}
-                                  onValueChange={(value) => updateFileMetadata(file.id, 'subcategory', value)}
-                                  disabled={!file.category}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select subcategory" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {file.category && categories
-                                      .find(cat => cat.id === file.category)
-                                      ?.subcategories.map((sub) => (
-                                        <SelectItem key={sub} value={sub}>
-                                          {sub}
-                                        </SelectItem>
-                                      ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-
-                            <div>
-                              <Label htmlFor={`description-${file.id}`}>Description</Label>
-                              <Textarea
-                                id={`description-${file.id}`}
-                                placeholder="Describe this document..."
-                                value={file.description}
-                                onChange={(e) => updateFileMetadata(file.id, 'description', e.target.value)}
-                              />
-                            </div>
-
-                            <div>
-                              <Label htmlFor={`tags-${file.id}`}>Tags</Label>
-                              <Input
-                                id={`tags-${file.id}`}
-                                placeholder="Enter tags separated by commas..."
-                                value={file.tags.join(', ')}
-                                onChange={(e) => updateFileMetadata(file.id, 'tags', e.target.value.split(',').map(tag => tag.trim()))}
-                              />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4 mr-2" />
-                                Preview
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <Download className="h-4 w-4 mr-2" />
-                                Download
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <Share2 className="h-4 w-4 mr-2" />
-                                Share
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                <CardContent className="p-8 text-center">
+                  <Mail className="h-16 w-16 text-slate-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-slate-900 mb-2">Email Upload</h3>
+                  <p className="text-slate-600 mb-4">
+                    Forward documents to our secure email address
+                  </p>
+                  <div className="bg-slate-100 p-4 rounded-lg">
+                    <p className="text-sm font-mono text-slate-700">
+                      upload@archeion.ai
+                    </p>
                   </div>
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* Upload Queue & Settings */}
           <div className="space-y-6">
-            {/* Quick Stats */}
+            {/* Upload Queue */}
             <Card className="border-0 shadow-sm">
               <CardHeader>
-                <CardTitle>Upload Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Total Files</span>
-                  <span className="font-semibold">{uploadedFiles.length}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Processing</span>
-                  <span className="font-semibold text-yellow-600">
-                    {uploadedFiles.filter(f => f.status === 'processing').length}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Completed</span>
-                  <span className="font-semibold text-green-600">
-                    {uploadedFiles.filter(f => f.status === 'completed').length}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Tips */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle>Upload Tips</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-slate-600">
-                    Use descriptive names for easier searching
-                  </p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-slate-600">
-                    Add relevant tags for better organization
-                  </p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-slate-600">
-                    Categorize documents for automated insights
-                  </p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-slate-600">
-                    Supported formats: PDF, DOC, JPG, PNG, TXT
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Uploads */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle>Recent Uploads</CardTitle>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="h-5 w-5" />
+                  <span>Upload Queue</span>
+                  {isParsing && (
+                    <Badge variant="secondary" className="ml-2">
+                      <Brain className="h-3 w-3 mr-1" />
+                      Parsing...
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} in queue
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {uploadedFiles.slice(0, 3).map((file) => (
-                  <div key={file.id} className="flex items-center gap-3 py-2">
-                    <FileText className="h-4 w-4 text-slate-400" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {new Date(file.uploadDate).toLocaleDateString()}
-                      </p>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {uploadedFiles.map((file) => (
+                    <div key={file.id} className="border border-slate-200 rounded-lg p-3">
+                      {/* File Header */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-4 w-4 text-slate-500" />
+                          <span className="text-sm font-medium text-slate-900">
+                            {editingFile === file.id ? (
+                              <Input
+                                value={file.name}
+                                onChange={(e) => updateFileMetadata(file.id, 'name', e.target.value)}
+                                className="h-6 text-sm"
+                              />
+                            ) : (
+                              file.name
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          {editingFile === file.id ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => saveEditing(file.id)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Save className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={cancelEditing}
+                                className="h-6 w-6 p-0"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => startEditing(file.id)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeFile(file.id)}
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* File Details */}
+                      <div className="grid grid-cols-2 gap-2 text-xs text-slate-500 mb-2">
+                        <span>{formatFileSize(file.size)}</span>
+                        <span>{file.type}</span>
+                      </div>
+
+                      {/* Status */}
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Badge className={getStatusColor(file.status)}>
+                          {getStatusIcon(file.status)}
+                          <span className="ml-1">{file.status}</span>
+                        </Badge>
+                        {file.status === 'uploading' && (
+                          <div className="flex-1 bg-slate-200 rounded-full h-2">
+                            <div 
+                              className="bg-slate-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${file.progress}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Category Selection */}
+                      <div className="space-y-2">
+                        <Select
+                          value={file.category}
+                          onValueChange={(value) => updateFileMetadata(file.id, 'category', value)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.name}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {file.category && (
+                          <Select
+                            value={file.subcategory}
+                            onValueChange={(value) => updateFileMetadata(file.id, 'subcategory', value)}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="Select subcategory" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories
+                                .find(cat => cat.name === file.category)
+                                ?.subcategories.map((subcategory) => (
+                                  <SelectItem key={subcategory} value={subcategory}>
+                                    {subcategory}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+
+                      {/* Parsing Results */}
+                      {parsingResults[file.id] && (
+                        <div className="mt-3 p-2 bg-slate-50 rounded border border-slate-200">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <Brain className="h-4 w-4 text-slate-600" />
+                            <span className="text-xs font-medium text-slate-700">AI Analysis Results</span>
+                            <Badge variant="secondary" className="text-xs">
+                              {parsingResults[file.id].confidence}% confidence
+                            </Badge>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            {parsingResults[file.id].extractedData.amounts.length > 0 && (
+                              <div className="flex items-center space-x-1">
+                                <DollarSign className="h-3 w-3 text-slate-500" />
+                                <span className="text-slate-600">
+                                  {parsingResults[file.id].extractedData.amounts.length} amounts found
+                                </span>
+                              </div>
+                            )}
+                            
+                            {parsingResults[file.id].extractedData.dates.length > 0 && (
+                              <div className="flex items-center space-x-1">
+                                <Calendar className="h-3 w-3 text-slate-500" />
+                                <span className="text-slate-600">
+                                  {parsingResults[file.id].extractedData.dates.length} dates found
+                                </span>
+                              </div>
+                            )}
+                            
+                            {parsingResults[file.id].extractedData.categories.length > 0 && (
+                              <div className="flex items-center space-x-1">
+                                <Tag className="h-3 w-3 text-slate-500" />
+                                <span className="text-slate-600">
+                                  {parsingResults[file.id].extractedData.categories.join(', ')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {parsingResults[file.id].insights.length > 0 && (
+                            <div className="mt-2 pt-2 border-t border-slate-200">
+                              <div className="flex items-center space-x-1 mb-1">
+                                <AlertTriangle className="h-3 w-3 text-slate-500" />
+                                <span className="text-xs font-medium text-slate-700">
+                                  {parsingResults[file.id].insights.length} insights found
+                                </span>
+                              </div>
+                              <div className="space-y-1">
+                                {parsingResults[file.id].insights.slice(0, 2).map((insight, index) => (
+                                  <div key={index} className="text-xs text-slate-600">
+                                    • {insight.title}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Error Display */}
+                      {file.error && (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                          {file.error}
+                        </div>
+                      )}
                     </div>
-                    <Badge className={getStatusColor(file.status)}>
-                      {file.status}
-                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Upload Settings */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle>Upload Settings</CardTitle>
+                <CardDescription>Configure your upload preferences</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm font-medium">Default Category</Label>
+                  <Select defaultValue="">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select default category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">Auto-categorization</Label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <input type="checkbox" id="auto-categorize" defaultChecked className="rounded" />
+                    <Label htmlFor="auto-categorize" className="text-sm text-slate-600">
+                      Use AI to automatically categorize documents
+                    </Label>
                   </div>
-                ))}
-                {uploadedFiles.length === 0 && (
-                  <p className="text-sm text-slate-500 text-center py-4">
-                    No files uploaded yet
-                  </p>
-                )}
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium">File Processing</Label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <input type="checkbox" id="extract-text" defaultChecked className="rounded" />
+                    <Label htmlFor="extract-text" className="text-sm text-slate-600">
+                      Extract text and data from documents
+                    </Label>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

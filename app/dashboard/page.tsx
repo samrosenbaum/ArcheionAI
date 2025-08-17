@@ -1,22 +1,42 @@
 "use client"
+
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
 import { 
-  Plus, Home, Coins, Briefcase, Shield, FileText, TrendingUp, Users, Upload, Eye, ChevronRight, DollarSign, Car, Crown, Grid
+  Home,
+  FileText,
+  Shield,
+  TrendingUp,
+  Home as HomeIcon,
+  Car,
+  Building,
+  Users,
+  Crown,
+  Coins,
+  BarChart3,
+  ChevronRight,
+  Upload,
+  Plus,
+  Eye,
+  AlertTriangle,
+  Clock,
+  CheckCircle
 } from "lucide-react"
 
 export default function DashboardPage() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const router = useRouter()
 
   const categories = [
     { id: "real-estate", name: "Real Estate", icon: Home, count: 3, value: 1250000, change: 2.4, documents: 12 },
     { id: "vehicles", name: "Vehicles", icon: Car, count: 2, value: 85000, change: -1.2, documents: 8 },
     { id: "investments", name: "Investments", icon: TrendingUp, count: 8, value: 450000, change: 8.7, documents: 15 },
-    { id: "business", name: "Business & LLCs", icon: Briefcase, count: 2, value: 320000, change: 0, documents: 9 },
+    { id: "business", name: "Business & LLCs", icon: Building, count: 2, value: 320000, change: 0, documents: 9 },
     { id: "insurance", name: "Insurance", icon: Shield, count: 6, value: 0, change: 0, documents: 18 },
     { id: "crypto", name: "Cryptocurrency", icon: Coins, count: 3, value: 75000, change: -12.5, documents: 6 },
     { id: "family", name: "Family Documents", icon: Users, count: 0, value: 0, change: 0, documents: 24 },
@@ -104,17 +124,40 @@ export default function DashboardPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-50 text-red-700 border-red-200'
-      case 'medium': return 'bg-yellow-50 text-yellow-700 border-yellow-200'
-      case 'low': return 'bg-slate-50 text-slate-700 border-slate-200'
+      case 'high': return 'bg-slate-100 text-slate-900 border-slate-300'
+      case 'medium': return 'bg-slate-50 text-slate-700 border-slate-200'
+      case 'low': return 'bg-slate-50 text-slate-600 border-slate-200'
       default: return 'bg-slate-50 text-slate-700 border-slate-200'
     }
   }
 
   const getChangeColor = (change: number) => {
-    if (change > 0) return 'text-green-600'
-    if (change < 0) return 'text-red-600'
-    return 'text-slate-600'
+    if (change > 0) return 'text-slate-900'
+    if (change < 0) return 'text-slate-600'
+    return 'text-slate-500'
+  }
+
+  const handleCategoryClick = (categoryId: string) => {
+    router.push(`/${categoryId}`)
+  }
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'upload':
+        router.push('/upload')
+        break
+      case 'add-asset':
+        router.push('/add-asset')
+        break
+      case 'reports':
+        router.push('/reports')
+        break
+      case 'security':
+        router.push('/security')
+        break
+      default:
+        break
+    }
   }
 
   return (
@@ -142,43 +185,43 @@ export default function DashboardPage() {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border border-slate-200 shadow-sm bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Total Asset Value</p>
-                  <p className="text-2xl font-bold text-slate-900">{formatCurrency(totalValue)}</p>
+                  <p className="text-sm font-medium text-slate-500 mb-2">Total Asset Value</p>
+                  <p className="text-3xl font-bold text-slate-900">{formatCurrency(totalValue)}</p>
                 </div>
-                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="h-6 w-6 text-slate-600" />
+                <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="h-7 w-7 text-slate-700" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border border-slate-200 shadow-sm bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Total Documents</p>
-                  <p className="text-2xl font-bold text-slate-900">{totalDocuments}</p>
+                  <p className="text-sm font-medium text-slate-500 mb-2">Total Documents</p>
+                  <p className="text-3xl font-bold text-slate-900">{totalDocuments}</p>
                 </div>
-                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-slate-600" />
+                <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center">
+                  <FileText className="h-7 w-7 text-slate-700" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm bg-white">
+          <Card className="border border-slate-200 shadow-sm bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Asset Categories</p>
-                  <p className="text-2xl font-bold text-slate-900">{categories.length}</p>
+                  <p className="text-sm font-medium text-slate-500 mb-2">Asset Categories</p>
+                  <p className="text-3xl font-bold text-slate-900">{categories.length}</p>
                 </div>
-                <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center">
-                  <Grid className="h-6 w-6 text-slate-600" />
+                <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="h-7 w-7 text-slate-700" />
                 </div>
               </div>
             </CardContent>
@@ -199,33 +242,33 @@ export default function DashboardPage() {
             {categories.map((category) => {
               const IconComponent = category.icon
               return (
-                <Card key={category.id} className="border-0 shadow-sm hover:shadow-md transition-shadow bg-white cursor-pointer group">
+                <Card key={category.id} className="border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 bg-white cursor-pointer group hover:border-slate-300" onClick={() => handleCategoryClick(category.id)}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center group-hover:bg-slate-200 transition-colors">
-                        <IconComponent className="h-5 w-5 text-slate-600" />
+                      <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                        <IconComponent className="h-6 w-6 text-slate-700" />
                       </div>
                       <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
                     </div>
                     
-                    <h3 className="font-semibold text-slate-900 mb-1">{category.name}</h3>
-                    <div className="space-y-2">
+                    <h3 className="font-semibold text-slate-900 mb-3 text-lg">{category.name}</h3>
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-slate-500">Assets</span>
-                        <span className="font-medium text-slate-900">{category.count}</span>
+                        <span className="font-semibold text-slate-900">{category.count}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-slate-500">Value</span>
-                        <span className="font-medium text-slate-900">{formatCurrency(category.value)}</span>
+                        <span className="font-semibold text-slate-900">{formatCurrency(category.value)}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-slate-500">Documents</span>
-                        <span className="font-medium text-slate-900">{category.documents}</span>
+                        <span className="font-semibold text-slate-900">{category.documents}</span>
                       </div>
                       {category.change !== 0 && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-slate-500">Change</span>
-                          <span className={`font-medium ${getChangeColor(category.change)}`}>
+                          <span className={`font-semibold ${getChangeColor(category.change)}`}>
                             {category.change > 0 ? '+' : ''}{category.change}%
                           </span>
                         </div>
@@ -248,7 +291,7 @@ export default function DashboardPage() {
                   <CardTitle className="text-lg text-slate-900">Recent Documents</CardTitle>
                   <CardDescription className="text-slate-600">Latest additions to your vault</CardDescription>
                 </div>
-                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900" onClick={() => router.push('/documents')}>
                   View All
                 </Button>
               </div>
@@ -256,7 +299,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-4">
                 {recentDocuments.map((doc) => (
-                  <div key={doc.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                  <div key={doc.id} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => router.push(`/documents/${doc.id}`)}>
                     <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center">
                       <FileText className="h-4 w-4 text-slate-600" />
                     </div>
@@ -284,7 +327,7 @@ export default function DashboardPage() {
                   <CardTitle className="text-lg text-slate-900">Insights & Alerts</CardTitle>
                   <CardDescription className="text-slate-600">Important items requiring attention</CardDescription>
                 </div>
-                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900">
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900" onClick={() => router.push('/insights')}>
                   View All
                 </Button>
               </div>
@@ -292,9 +335,12 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-4">
                 {insights.map((insight) => (
-                  <div key={insight.id} className="p-4 border border-slate-200 rounded-lg">
+                  <div key={insight.id} className="p-4 border border-slate-200 rounded-lg bg-slate-50/50 cursor-pointer hover:bg-slate-100/50 transition-colors" onClick={() => router.push(`/insights/${insight.id}`)}>
                     <div className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
+                      <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                        insight.priority === 'high' ? 'bg-slate-900' : 
+                        insight.priority === 'medium' ? 'bg-slate-600' : 'bg-slate-400'
+                      }`}></div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium text-slate-900 mb-1">{insight.title}</h4>
                         <p className="text-sm text-slate-600 mb-2">{insight.description}</p>
@@ -318,20 +364,20 @@ export default function DashboardPage() {
         <div className="mt-8">
           <h2 className="text-xl font-semibold text-slate-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-20 flex-col space-y-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
-              <Upload className="h-6 w-6 text-slate-600" />
+            <Button variant="outline" className="h-24 flex-col space-y-3 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => handleQuickAction('upload')}>
+              <Upload className="h-7 w-7 text-slate-700" />
               <span className="text-sm font-medium text-slate-700">Upload Document</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col space-y-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
-              <Plus className="h-6 w-6 text-slate-600" />
+            <Button variant="outline" className="h-24 flex-col space-y-3 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => handleQuickAction('add-asset')}>
+              <Plus className="h-7 w-7 text-slate-700" />
               <span className="text-sm font-medium text-slate-700">Add Asset</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col space-y-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
-              <Eye className="h-6 w-6 text-slate-600" />
+            <Button variant="outline" className="h-24 flex-col space-y-3 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => handleQuickAction('reports')}>
+              <Eye className="h-7 w-7 text-slate-700" />
               <span className="text-sm font-medium text-slate-700">View Reports</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col space-y-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50">
-              <Shield className="h-6 w-6 text-slate-600" />
+            <Button variant="outline" className="h-24 flex-col space-y-3 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => handleQuickAction('security')}>
+              <Shield className="h-7 w-7 text-slate-700" />
               <span className="text-sm font-medium text-slate-700">Security</span>
             </Button>
           </div>

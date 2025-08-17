@@ -56,24 +56,24 @@ export default function DocumentsPage() {
 
   const categories = [
     { id: "all", name: "All Documents", icon: FileText, color: "bg-slate-600" },
-    { id: "real-estate", name: "Real Estate", icon: FileText, color: "bg-blue-600" },
-    { id: "investments", name: "Investments", icon: FileText, color: "bg-green-600" },
-    { id: "crypto", name: "Cryptocurrency", icon: FileText, color: "bg-orange-600" },
-    { id: "business", name: "Business & LLCs", icon: FileText, color: "bg-purple-600" },
-    { id: "insurance", name: "Insurance", icon: FileText, color: "bg-red-600" },
-    { id: "tax", name: "Tax Documents", icon: FileText, color: "bg-indigo-600" },
-    { id: "vehicles", name: "Vehicles", icon: FileText, color: "bg-teal-600" },
-    { id: "family", name: "Family Documents", icon: FileText, color: "bg-pink-600" },
-    { id: "trusts", name: "Trusts & Estates", icon: FileText, color: "bg-amber-600" }
+    { id: "real-estate", name: "Real Estate", icon: FileText, color: "bg-slate-600" },
+    { id: "investments", name: "Investments", icon: FileText, color: "bg-slate-600" },
+    { id: "crypto", name: "Cryptocurrency", icon: FileText, color: "bg-slate-600" },
+    { id: "business", name: "Business & LLCs", icon: FileText, color: "bg-slate-600" },
+    { id: "insurance", name: "Insurance", icon: FileText, color: "bg-slate-600" },
+    { id: "tax", name: "Tax Documents", icon: FileText, color: "bg-slate-600" },
+    { id: "vehicles", name: "Vehicles", icon: FileText, color: "bg-slate-600" },
+    { id: "family", name: "Family Documents", icon: FileText, color: "bg-slate-600" },
+    { id: "trusts", name: "Trusts & Estates", icon: FileText, color: "bg-slate-600" }
   ]
 
   const statuses = [
     { id: "all", name: "All Statuses", color: "bg-slate-600" },
-    { id: "valid", name: "Valid", color: "bg-green-600" },
-    { id: "expiring_soon", name: "Expiring Soon", color: "bg-yellow-600" },
-    { id: "expired", name: "Expired", color: "bg-red-600" },
-    { id: "pending_review", name: "Pending Review", color: "bg-blue-600" },
-    { id: "archived", name: "Archived", color: "bg-gray-600" }
+    { id: "valid", name: "Valid", color: "bg-slate-600" },
+    { id: "expiring_soon", name: "Expiring Soon", color: "bg-slate-600" },
+    { id: "expired", name: "Expired", color: "bg-slate-600" },
+    { id: "pending_review", name: "Pending Review", color: "bg-slate-600" },
+    { id: "archived", name: "Archived", color: "bg-slate-600" }
   ]
 
   const documents: Document[] = [
@@ -230,12 +230,11 @@ export default function DocumentsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'valid': return 'bg-green-100 text-green-800'
-      case 'expiring_soon': return 'bg-yellow-100 text-yellow-800'
-      case 'expired': return 'bg-red-100 text-red-800'
-      case 'pending_review': return 'bg-blue-100 text-blue-800'
-      case 'archived': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'valid': return 'bg-slate-100 text-slate-900 border-slate-300'
+      case 'expiring_soon': return 'bg-slate-50 text-slate-700 border-slate-200'
+      case 'expired': return 'bg-slate-100 text-slate-800 border-slate-300'
+      case 'pending_review': return 'bg-slate-100 text-slate-800 border-slate-300'
+      default: return 'bg-slate-100 text-slate-800 border-slate-300'
     }
   }
 
@@ -252,10 +251,10 @@ export default function DocumentsPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'high': return 'bg-slate-100 text-slate-900 border-slate-300'
+      case 'medium': return 'bg-slate-50 text-slate-700 border-slate-200'
+      case 'low': return 'bg-slate-100 text-slate-800 border-slate-300'
+      default: return 'bg-slate-100 text-slate-800 border-slate-300'
     }
   }
 
@@ -301,56 +300,56 @@ export default function DocumentsPage() {
           
           {/* Document Summary */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-blue-100">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-blue-600 mb-1">Total Documents</p>
-                    <p className="text-2xl font-bold text-blue-900">{totalDocuments}</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1">Total Documents</p>
+                    <p className="text-2xl font-bold text-slate-900">{totalDocuments}</p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
                     <FileText className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-green-100">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-green-600 mb-1">Valid Documents</p>
-                    <p className="text-2xl font-bold text-green-900">{documents.filter(d => d.status === 'valid').length}</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1">Valid Documents</p>
+                    <p className="text-2xl font-bold text-slate-900">{documents.filter(d => d.status === 'valid').length}</p>
                   </div>
-                  <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-yellow-50 to-yellow-100">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-yellow-600 mb-1">Expiring Soon</p>
-                    <p className="text-2xl font-bold text-yellow-900">{expiringSoon}</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1">Expiring Soon</p>
+                    <p className="text-2xl font-bold text-slate-900">{expiringSoon}</p>
                   </div>
-                  <div className="w-12 h-12 bg-yellow-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
                     <Clock className="w-6 h-6 text-white" />
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-red-50 to-red-100">
+            <Card className="border border-slate-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-red-600 mb-1">Expired</p>
-                    <p className="text-2xl font-bold text-red-900">{expiredDocuments}</p>
+                    <p className="text-sm font-medium text-slate-600 mb-1">Expired</p>
+                    <p className="text-2xl font-bold text-slate-900">{expiredDocuments}</p>
                   </div>
-                  <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-slate-600 rounded-lg flex items-center justify-center">
                     <AlertTriangle className="w-6 h-6 text-white" />
                   </div>
                 </div>

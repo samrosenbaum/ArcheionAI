@@ -1,110 +1,97 @@
-# 🚀 Archeion AI Setup Guide
+# Archeion Setup Instructions
 
-## 📋 Prerequisites
+## 1. Supabase Project Setup
 
-Before you can run or deploy this project, you need to set up several services and get API keys.
+### Create New Project
+1. Go to [https://supabase.com](https://supabase.com)
+2. Sign in and click "New Project"
+3. Choose your organization
+4. Enter project name: `archeion-ai`
+5. Enter database password (save this securely)
+6. Choose region closest to you
+7. Click "Create new project"
 
-## 🔑 Required Environment Variables
+### Get Project Credentials
+1. Once project is created, go to Settings → API
+2. Copy the `Project URL` (looks like: `https://mdzfyiecigbmfusaxmoy.supabase.co`)
+3. Copy the `anon public` key (starts with `eyJ...`)
 
-Create a `.env.local` file in the root directory with the following variables:
+### Update Environment Variables
+1. Copy `.env.local` to your project root
+2. Update these values:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://your-actual-project-id.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_actual_anon_key_here
+   ```
 
-### 1. **Supabase Configuration** (Required)
-```bash
-# Get these from https://supabase.com
-NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-```
+## 2. Database Setup
 
-**How to get these:**
-1. Go to [supabase.com](https://supabase.com) and create an account
-2. Create a new project
-3. Go to Project Settings → API
-4. Copy the "Project URL" and "anon public" key
-
-### 2. **Anthropic Claude AI** (Required)
-```bash
-# Get this from https://console.anthropic.com/
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-```
-
-**How to get this:**
-1. Go to [console.anthropic.com](https://console.anthropic.com/)
-2. Sign up or sign in
-3. Go to API Keys section
-4. Create a new API key
-
-### 3. **Twilio SMS Integration** (Optional)
-```bash
-# Get these from https://console.twilio.com/
-TWILIO_ACCOUNT_SID=your_twilio_account_sid_here
-TWILIO_AUTH_TOKEN=your_twilio_auth_token_here
-TWILIO_PHONE_NUMBER=+1234567890
-```
-
-**How to get these:**
-1. Go to [twilio.com](https://twilio.com) and create an account
-2. Go to Console → Dashboard
-3. Copy your Account SID and Auth Token
-4. Get a phone number from Console → Phone Numbers
-
-### 4. **App Configuration**
-```bash
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NODE_ENV=development
-```
-
-## 🗄️ Database Setup
-
+### Run SQL Script
 1. In your Supabase project, go to SQL Editor
 2. Copy the contents of `scripts/setup-database.sql`
-3. Run the SQL script to create all necessary tables
+3. Paste and run the script
+4. This creates:
+   - `documents` table
+   - `document_insights` table  
+   - `categories` table
+   - Storage bucket for files
+   - Row Level Security policies
 
-## 🚀 Running Locally
+### Verify Setup
+1. Go to Table Editor → check if tables exist
+2. Go to Storage → check if `documents` bucket exists
+3. Go to Authentication → Settings → URL Configuration
+4. Add these URLs to "Site URL" and "Redirect URLs":
+   - `http://localhost:3000`
+   - `http://localhost:3000/auth/callback`
+   - `http://localhost:3000/login`
+   - `http://localhost:3000/onboarding`
 
-1. Install dependencies:
-   ```bash
-   pnpm install
-   ```
+## 3. Local Development
 
-2. Create `.env.local` with your actual values
+### Install Dependencies
+```bash
+pnpm install
+```
 
-3. Start the development server:
-   ```bash
-   pnpm dev
-   ```
+### Start Development Server
+```bash
+pnpm dev
+```
 
-4. Open [http://localhost:3000](http://localhost:3000)
+### Test Upload Functionality
+1. Go to `http://localhost:3000/upload`
+2. Try uploading a small PDF or image file
+3. Check browser console for debug logs
+4. Check Supabase Storage and Tables for uploaded files
 
-## 🌐 Deployment
+## 4. Troubleshooting
 
-### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Set all environment variables in Vercel dashboard
-3. Deploy automatically
+### Upload Not Working
+- Check browser console for errors
+- Verify environment variables are correct
+- Ensure database tables exist
+- Check if storage bucket exists
+- Verify RLS policies are enabled
 
-### Netlify
-1. Connect your GitHub repository to Netlify
-2. Set build command: `pnpm build`
-3. Set publish directory: `.next`
-4. Add environment variables
-5. Deploy
+### Common Issues
+- **"Storage bucket not found"**: Run the SQL setup script
+- **"Table doesn't exist"**: Run the SQL setup script  
+- **"Unauthorized"**: Check environment variables
+- **"File too large"**: Files must be under 50MB
 
-## ⚠️ Important Notes
+## 5. Next Steps
 
-- **Never commit `.env.local`** - it's already in `.gitignore`
-- **Keep your API keys secure** - don't share them publicly
-- **Start with Supabase and Anthropic** - these are required
-- **Add Twilio later** - it's optional for SMS features
+Once upload is working:
+1. Test document categorization
+2. Implement AI analysis
+3. Add alert system
+4. Build mobile app (PWA)
 
-## 🆘 Troubleshooting
+## Support
 
-### Common Issues:
-1. **"Missing environment variables"** - Make sure `.env.local` exists and has correct values
-2. **"Supabase connection failed"** - Check your Supabase URL and anon key
-3. **"AI analysis not working"** - Verify your Anthropic API key
-4. **"SMS features not working"** - Check Twilio configuration (optional)
-
-### Getting Help:
-- Check the [README.md](README.md) for more details
-- Review the database setup script
-- Check console logs for specific error messages
+If you encounter issues:
+1. Check browser console for error messages
+2. Verify Supabase project settings
+3. Check environment variables
+4. Ensure database setup is complete
