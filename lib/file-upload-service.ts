@@ -142,7 +142,7 @@ export class FileUploadService {
         subcategory: subcategory || '',
         tags: tags,
         asset_name: assetName,
-        status: 'active',
+        status: 'completed',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
