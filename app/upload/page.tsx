@@ -254,14 +254,20 @@ export default function UploadPage() {
         await parseDocument(file, newFile.id)
         
         // Mark as completed - ready for batch upload
-        setUploadedFiles(prev => prev.map(f => 
-          f.id === newFile.id ? { ...f, status: 'completed' } : f
-        ))
+        setUploadedFiles(prev => {
+          const updated = prev.map(f => 
+            f.id === newFile.id ? { ...f, status: 'completed' as const } : f
+          )
+          console.log('Updated file status to completed:', newFile.name, 'New status:', updated.find(f => f.id === newFile.id)?.status)
+          return updated
+        })
         
         toast({
           title: "File Ready",
           description: `${file.name} has been processed and is ready to upload.`,
         })
+        
+        console.log('File marked as completed:', file.name, 'Status should now be: completed')
       }
     } catch (error) {
       console.error('File handling error:', error)
@@ -276,9 +282,14 @@ export default function UploadPage() {
   const parseDocument = async (file: File, fileId: string) => {
     try {
       setIsParsing(true)
-      console.log('Starting document parsing for:', file.name)
+      console.log('Starting document parsing for:', file.name, 'File ID:', fileId)
+      
+      // Add a small delay to show processing state
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
       const parsedDocument = await DocumentParser.parseDocument(file, user.id)
+      console.log('Document parsing successful:', parsedDocument)
+      
       setParsingResults(prev => ({ ...prev, [fileId]: parsedDocument }))
       
       // Auto-categorize based on parsing results
@@ -304,13 +315,21 @@ export default function UploadPage() {
         setShowAssetNaming(true)
       }
       
-      console.log('Document parsing completed:', parsedDocument)
+      console.log('Document parsing completed successfully for:', file.name)
       
     } catch (error) {
-      console.error('Document parsing error:', error)
+      console.error('Document parsing error for file:', file.name, error)
+      
+      // Mark file as failed but still allow manual submission
+      setUploadedFiles(prev => prev.map(f => 
+        f.id === fileId 
+          ? { ...f, status: 'completed', error: 'Parsing failed but file can still be uploaded' }
+          : f
+      ))
+      
       toast({
-        title: "Parsing failed",
-        description: "Failed to parse document content",
+        title: "Parsing Warning",
+        description: "Document parsing failed, but you can still upload the file manually",
         variant: "destructive",
       })
     } finally {
@@ -475,6 +494,7 @@ export default function UploadPage() {
       case 'processing': return <Clock size={16} />
       case 'completed': return <CheckCircle size={16} />
       case 'error': return <AlertTriangle size={16} />
+      case 'saved': return <CheckCircle size={16} />
       default: return <Clock size={16} />
     }
   }
@@ -483,8 +503,9 @@ export default function UploadPage() {
     switch (status) {
       case 'uploading': return 'bg-slate-100 text-slate-900 border-slate-300'
       case 'processing': return 'bg-slate-50 text-slate-700 border-slate-200'
-      case 'completed': return 'bg-slate-100 text-slate-800 border-slate-300'
-      case 'error': return 'bg-slate-100 text-slate-800 border-slate-300'
+      case 'completed': return 'bg-green-100 text-green-800 border-green-300 font-semibold'
+      case 'error': return 'bg-red-100 text-red-800 border-red-300'
+      case 'saved': return 'bg-blue-100 text-blue-800 border-blue-300 font-semibold'
       default: return 'bg-slate-100 text-slate-800 border-slate-300'
     }
   }
@@ -1092,17 +1113,31 @@ export default function UploadPage() {
                       <Button
                         onClick={handleSubmitAll}
                         disabled={uploadedFiles.some(f => f.status !== 'completed')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 text-lg font-semibold"
+                        size="lg"
                       >
-                        <CheckCircle className="h-4 w-4 mr-2" />
+                        <CheckCircle className="h-5 w-5 mr-2" />
                         Submit All Files
                       </Button>
                     </div>
+                    
+                    {/* Status Messages */}
                     {uploadedFiles.some(f => f.status !== 'completed') && (
                       <div className="text-xs text-slate-500 mt-2">
                         Waiting for all files to complete processing...
                       </div>
                     )}
+                    
+                    {uploadedFiles.every(f => f.status === 'completed') && (
+                      <div className="text-sm text-green-600 mt-2 font-medium">
+                        ✨ All files are ready! Click "Submit All Files" to save to your vault.
+                      </div>
+                    )}
+                    
+                    {/* Debug Info */}
+                    <div className="text-xs text-slate-400 mt-2">
+                      Debug: {uploadedFiles.map(f => `${f.name}: ${f.status}`).join(', ')}
+                    </div>
                   </div>
                 )}
               </CardContent>
