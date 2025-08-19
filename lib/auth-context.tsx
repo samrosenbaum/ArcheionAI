@@ -163,7 +163,7 @@ export function useAuth() {
 // Mock auth for development (remove in production)
 export function useMockAuth() {
   const [user] = useState<User>({
-    id: "user-123",
+    id: "550e8400-e29b-41d4-a716-446655440000", // Valid UUID format
     email: "demo@archeion.com",
     name: "Demo User"
   })

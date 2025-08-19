@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { DocumentParser } from './document-parser'
+import { DocumentParser, ParsedDocument } from './document-parser'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -11,16 +11,17 @@ export interface UploadedFile {
   name: string
   size: number
   type: string
-  status: 'uploading' | 'processing' | 'completed' | 'error'
+  status: 'uploading' | 'processing' | 'completed' | 'error' | 'saved'
   progress: number
   category: string
   subcategory: string
   tags: string[]
   description: string
-  assetId?: string
+  assetName?: string
   uploadDate: string
   filePath?: string
   error?: string
+  originalFile?: File // Store the original File object for upload
 }
 
 export interface FileUploadOptions {
@@ -28,7 +29,7 @@ export interface FileUploadOptions {
   subcategory?: string
   tags?: string[]
   description?: string
-  assetId?: string
+  assetName?: string
 }
 
 export class FileUploadService {
@@ -66,6 +67,107 @@ export class FileUploadService {
     return { valid: true }
   }
 
+  // Upload file to Supabase Storage only
+  static async uploadToStorage(
+    file: File,
+    userId: string,
+    assetName?: string
+  ): Promise<{ filePath: string; url: string }> {
+    try {
+      console.log('Uploading file to storage:', file.name)
+      
+      // Generate unique file path with asset organization
+      const timestamp = Date.now()
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+      const fileName = `${timestamp}-${safeFileName}`
+      
+      // Organize by user -> asset -> files
+      const filePath = assetName 
+        ? `${userId}/${assetName}/${fileName}`
+        : `${userId}/${fileName}`
+      
+      console.log('Generated storage path:', filePath)
+
+      // Upload to Supabase Storage
+      const { error } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (error) {
+        console.error('Storage upload error:', error)
+        throw new Error(`Storage upload failed: ${error.message}`)
+      }
+      
+      console.log('Storage upload successful')
+
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath)
+
+      return {
+        filePath,
+        url: urlData.publicUrl
+      }
+      
+    } catch (error) {
+      console.error('Upload to storage failed:', error)
+      throw error
+    }
+  }
+
+  // Save document metadata to database
+  static async saveDocumentMetadata(
+    file: File,
+    userId: string,
+    filePath: string,
+    assetName: string,
+    category: string,
+    subcategory: string,
+    tags: string[] = []
+  ): Promise<string> {
+    try {
+      console.log('Saving document metadata to database')
+      
+      const documentData = {
+        user_id: userId,
+        name: file.name,
+        file_path: filePath,
+        file_size: file.size,
+        file_type: file.type,
+        category: category || 'uncategorized',
+        subcategory: subcategory || '',
+        tags: tags,
+        asset_name: assetName,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data: docData, error: docError } = await supabase
+        .from('documents')
+        .insert([documentData])
+        .select()
+        .single()
+
+      if (docError) {
+        console.error('Database insert error:', docError)
+        throw new Error(`Database insert failed: ${docError.message}`)
+      }
+      
+      console.log('Document metadata saved:', docData.id)
+      return docData.id
+      
+    } catch (error) {
+      console.error('Save metadata failed:', error)
+      throw error
+    }
+  }
+
+  // Main upload method - orchestrates the entire process
   static async uploadFile(
     file: File,
     userId: string,
@@ -80,94 +182,26 @@ export class FileUploadService {
         throw new Error(validation.error)
       }
 
-      // Generate unique file path
-      const timestamp = Date.now()
-      const fileExtension = file.name.split('.').pop()
-      const fileName = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${fileExtension}`
-      const filePath = `${userId}/${fileName}`
+      // Step 1: Upload to storage
+      const { filePath } = await this.uploadToStorage(file, userId, options.assetName)
       
-      console.log('Generated file path:', filePath)
-
-      // First, create the document record in database
-      const documentData = {
-        user_id: userId,
-        name: file.name,
-        file_path: filePath,
-        file_size: file.size,
-        file_type: file.type,
-        category: options.category || 'uncategorized',
-        subcategory: options.subcategory || '',
-        tags: options.tags || [],
-        status: 'uploading',
-        metadata: {
-          originalName: file.name,
-          uploadDate: new Date().toISOString(),
-          description: options.description || '',
-          assetId: options.assetId || null
-        }
-      }
+      // Step 2: Save metadata to database
+      const documentId = await this.saveDocumentMetadata(
+        file,
+        userId,
+        filePath,
+        options.assetName || 'Uncategorized',
+        options.category || 'uncategorized',
+        options.subcategory || '',
+        options.tags || []
+      )
       
-      console.log('Document data to insert:', documentData)
-
-      const { data: docData, error: docError } = await supabase
-        .from('documents')
-        .insert([documentData])
-        .select()
-        .single()
-
-      if (docError) {
-        console.error('Database insert error:', docError)
-        throw new Error(`Database insert failed: ${docError.message}`)
-      }
+      // Step 3: Parse document for insights (async, don't block upload)
+      this.parseDocumentAsync(file, documentId, userId)
       
-      console.log('Database insert successful:', docData)
-
-      // Now upload to Supabase storage
-      console.log('Attempting to upload to Supabase storage...')
-      const { data: _data, error } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
-
-      if (error) {
-        console.error('Storage upload error:', error)
-        
-        // Clean up database record if storage upload fails
-        await supabase
-          .from('documents')
-          .delete()
-          .eq('id', docData.id)
-        
-        throw new Error(`Upload failed: ${error.message}`)
-      }
-      
-      console.log('Storage upload successful')
-
-      // Parse the document to extract insights
-      try {
-        console.log('Starting document parsing...')
-        const parsedDocument = await DocumentParser.parseDocument(file, userId)
-        
-        // Save parsing results to database
-        await DocumentParser.saveParsedDocument(docData.id, parsedDocument, userId)
-        
-        console.log('Document parsing and saving completed')
-      } catch (parseError) {
-        console.warn('Document parsing failed, continuing with upload:', parseError)
-        // Don't fail the upload if parsing fails
-      }
-
-      // Update document status to completed
-      await supabase
-        .from('documents')
-        .update({ status: 'completed' })
-        .eq('id', docData.id)
-
-      // Return the uploaded file object
+      // Return success response
       return {
-        id: docData.id,
+        id: documentId,
         name: file.name,
         size: file.size,
         type: file.type,
@@ -177,16 +211,68 @@ export class FileUploadService {
         subcategory: options.subcategory || '',
         tags: options.tags || [],
         description: options.description || '',
-        assetId: options.assetId,
+        assetName: options.assetName,
         uploadDate: new Date().toISOString(),
         filePath: filePath
       }
-
+      
     } catch (error) {
-      console.error('File upload error:', error)
+      console.error('File upload failed:', error)
       throw error
     }
   }
+
+  // Parse document asynchronously
+  private static async parseDocumentAsync(file: File, documentId: string, userId: string) {
+    try {
+      console.log('Starting async document parsing for:', documentId)
+      const parsedDocument = await DocumentParser.parseDocument(file, userId)
+      
+      // Save parsing results
+      await this.saveParsingResults(documentId, parsedDocument, userId)
+      
+    } catch (error) {
+      console.warn('Async parsing failed for document:', documentId, error)
+      // Don't fail the upload for parsing errors
+    }
+  }
+
+  // Save parsing results to database
+  private static async saveParsingResults(
+    documentId: string,
+    parsedDocument: ParsedDocument,
+    userId: string
+  ) {
+    try {
+      const insightData = {
+        user_id: userId,
+        document_id: documentId,
+        extracted_text: JSON.stringify(parsedDocument.extractedData),
+        confidence: parsedDocument.confidence,
+        categories: parsedDocument.extractedData.categories,
+        amounts: parsedDocument.extractedData.amounts,
+        dates: parsedDocument.extractedData.dates,
+        key_terms: parsedDocument.extractedData.keyTerms,
+        insights: parsedDocument.insights,
+        created_at: new Date().toISOString()
+      }
+
+      const { error: insightError } = await supabase
+        .from('document_insights')
+        .insert([insightData])
+
+      if (insightError) {
+        console.error('Insight save error:', insightError)
+      } else {
+        console.log('Parsing results saved for document:', documentId)
+      }
+      
+    } catch (error) {
+      console.error('Save parsing results failed:', error)
+    }
+  }
+
+
 
   static async deleteFile(filePath: string, userId: string): Promise<void> {
     try {
@@ -243,6 +329,38 @@ export class FileUploadService {
     } catch (error) {
       console.error('Get file URL error:', error)
       throw error
+    }
+  }
+
+  // Download file from storage
+  static async downloadFile(filePath: string): Promise<Blob> {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .download(filePath)
+    
+    if (error) {
+      throw new Error(`Download failed: ${error.message}`)
+    }
+    
+    return data
+  }
+
+  // List files for a user/asset
+  static async listUserFiles(userId: string, assetName?: string): Promise<string[]> {
+    try {
+      const path = assetName ? `${userId}/${assetName}` : userId
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .list(path)
+      
+      if (error) {
+        throw new Error(`List files failed: ${error.message}`)
+      }
+      
+      return data.map(item => item.name)
+    } catch (error) {
+      console.error('List files failed:', error)
+      return []
     }
   }
 

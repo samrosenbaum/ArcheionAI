@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
-import { FileUploadService, UploadedFile, FileUploadOptions } from "@/lib/file-upload-service"
+import { FileUploadService, UploadedFile } from "@/lib/file-upload-service"
 import { DocumentParser, ParsedDocument } from "@/lib/document-parser"
 import { useMockAuth } from "@/lib/auth-context"
 import { 
@@ -41,9 +41,104 @@ export default function UploadPage() {
   const [editingFile, setEditingFile] = useState<string | null>(null)
   const [parsingResults, setParsingResults] = useState<Record<string, ParsedDocument>>({})
   const [isParsing, setIsParsing] = useState(false)
+  const [assetName, setAssetName] = useState('')
+  const [assetCategory, setAssetCategory] = useState('')
+  const [assetSubcategory, setAssetSubcategory] = useState('')
+  const [showAssetNaming, setShowAssetNaming] = useState(true) // Show by default
+  const [suggestedAssetNames, setSuggestedAssetNames] = useState<string[]>([])
+  const [customCategories, setCustomCategories] = useState<Array<{id: string, name: string, subcategories: string[]}>>([])
+  const [showCustomCategoryForm, setShowCustomCategoryForm] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newSubcategories, setNewSubcategories] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const { user } = useMockAuth()
+
+
+
+  // Handle submitting all completed files to Supabase
+  const handleSubmitAll = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to upload documents",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const completedFiles = uploadedFiles.filter(f => f.status === 'completed')
+    if (completedFiles.length === 0) {
+      toast({
+        title: "No Files Ready",
+        description: "All files must be processed before submitting",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      toast({
+        title: "Saving Documents",
+        description: `Saving ${completedFiles.length} documents to your vault...`,
+      })
+
+      // Save each completed file using the new service
+      for (const file of completedFiles) {
+        try {
+          // We need the original File object, not the UploadedFile metadata
+          // This should be stored when the file is first added
+          const originalFile = file.originalFile
+          if (!originalFile) {
+            throw new Error('Original file not found')
+          }
+
+          // Use the new FileUploadService to handle everything
+          const uploadedFile = await FileUploadService.uploadFile(originalFile, user.id, {
+            category: file.category,
+            subcategory: file.subcategory,
+            tags: file.tags,
+            description: file.description,
+            assetName: assetName
+          })
+
+          // Update file status to saved
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === file.id ? { ...f, status: 'saved' as const } : f
+          ))
+
+          console.log('File successfully uploaded:', uploadedFile)
+
+        } catch (error) {
+          console.error(`Error saving file ${file.name}:`, error)
+          // Update file status to error
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === file.id ? { ...f, status: 'error', error: error instanceof Error ? error.message : 'Save failed' } : f
+          ))
+        }
+      }
+
+      // Show success message
+      const savedCount = uploadedFiles.filter(f => f.status === 'saved').length
+      toast({
+        title: "Documents Saved!",
+        description: `Successfully saved ${savedCount} documents to your vault`,
+      })
+
+      // Clear completed files after successful save
+      setUploadedFiles(prev => prev.filter(f => f.status !== 'saved'))
+      setParsingResults({})
+      setAssetName('')
+
+    } catch (error) {
+      console.error('Submit all error:', error)
+      toast({
+        title: "Save Failed",
+        description: "Failed to save some documents. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const categories = [
     {
@@ -95,6 +190,11 @@ export default function UploadPage() {
       id: "trusts",
       name: "Trusts & Estates",
       subcategories: ["Trust Agreements", "Wills", "Power of Attorney", "Healthcare Directives", "Estate Planning"]
+    },
+    {
+      id: "pets",
+      name: "Pets & Animals",
+      subcategories: ["Vaccination Records", "Adoption Papers", "Pet Insurance", "Veterinary Records", "Microchip Info", "Training Certificates"]
     }
   ]
 
@@ -132,7 +232,7 @@ export default function UploadPage() {
       for (const file of Array.from(files)) {
         console.log('Processing file:', file.name, file.size, file.type) // Debug log
         
-        // Create initial file object with original name
+        // Create initial file object with original file stored
         const newFile: UploadedFile = {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
@@ -140,61 +240,28 @@ export default function UploadPage() {
           type: file.type,
           status: 'uploading',
           progress: 0,
-          category: "",
-          subcategory: "",
+          category: assetCategory || "",
+          subcategory: assetSubcategory || "",
           tags: [],
           description: '',
-          uploadDate: new Date().toISOString()
+          uploadDate: new Date().toISOString(),
+          originalFile: file // Store the original File object
         }
         
         setUploadedFiles(prev => [...prev, newFile])
         
-        // Start parsing the document
+        // Start parsing the document (don't upload yet)
         await parseDocument(file, newFile.id)
         
-        try {
-          // Upload file using the service
-          const uploadOptions: FileUploadOptions = {
-            category: newFile.category || undefined,
-            subcategory: newFile.subcategory || undefined,
-            tags: newFile.tags,
-            description: newFile.description,
-            assetId: newFile.assetId
-          }
-          
-          console.log('Starting upload with options:', uploadOptions) // Debug log
-          console.log('User ID:', user.id) // Debug log
-          
-          const uploadedFile = await FileUploadService.uploadFile(file, user.id, uploadOptions)
-          
-          console.log('Upload successful:', uploadedFile) // Debug log
-          
-          // Update the file with the uploaded data
-          setUploadedFiles(prev => prev.map(f => 
-            f.id === newFile.id ? { ...uploadedFile, id: f.id } : f
-          ))
-          
-          toast({
-            title: "Upload successful",
-            description: `${file.name} has been uploaded and parsed successfully.`,
-          })
-          
-        } catch (error) {
-          console.error('Upload error:', error)
-          
-          // Update file with error status
-          setUploadedFiles(prev => prev.map(f => 
-            f.id === newFile.id 
-              ? { ...f, status: 'error', error: error instanceof Error ? error.message : 'Upload failed' }
-              : f
-          ))
-          
-          toast({
-            title: "Upload failed",
-            description: error instanceof Error ? error.message : 'Failed to upload file',
-            variant: "destructive",
-          })
-        }
+        // Mark as completed - ready for batch upload
+        setUploadedFiles(prev => prev.map(f => 
+          f.id === newFile.id ? { ...f, status: 'completed' } : f
+        ))
+        
+        toast({
+          title: "File Ready",
+          description: `${file.name} has been processed and is ready to upload.`,
+        })
       }
     } catch (error) {
       console.error('File handling error:', error)
@@ -228,6 +295,15 @@ export default function UploadPage() {
         }
       }
       
+      // Generate asset name suggestions based on parsed content
+      const suggestions = generateAssetNameSuggestions(parsedDocument, file.name)
+      setSuggestedAssetNames(suggestions)
+      
+      // Show asset naming if we have good suggestions
+      if (suggestions.length > 0 && !assetName) {
+        setShowAssetNaming(true)
+      }
+      
       console.log('Document parsing completed:', parsedDocument)
       
     } catch (error) {
@@ -241,6 +317,127 @@ export default function UploadPage() {
       setIsParsing(false)
     }
   }
+
+  const generateAssetNameSuggestions = (parsedDocument: ParsedDocument, filename: string): string[] => {
+    const suggestions: string[] = []
+    
+    // Extract address information from real estate documents
+    if (parsedDocument.extractedData.realEstate?.propertyAddress) {
+      suggestions.push(parsedDocument.extractedData.realEstate.propertyAddress)
+    }
+    
+    // Extract business names from business documents
+    if (parsedDocument.extractedData.business?.businessName) {
+      suggestions.push(parsedDocument.extractedData.business.businessName)
+    }
+    
+    // Extract policy numbers from insurance documents
+    if (parsedDocument.extractedData.insurance?.policyNumber) {
+      suggestions.push(`Policy ${parsedDocument.extractedData.insurance.policyNumber}`)
+    }
+    
+    // Extract vehicle information from filename patterns
+    if (filename.toLowerCase().includes('vehicle') || filename.toLowerCase().includes('car')) {
+      const vehicleMatch = filename.match(/(\d{4})\s*([A-Za-z]+)/)
+      if (vehicleMatch) {
+        suggestions.push(`${vehicleMatch[2]} ${vehicleMatch[1]}`)
+      }
+    }
+    
+    // Fallback: try to extract from filename
+    const filenameParts = filename.replace(/[._-]/g, ' ').split(' ')
+    const potentialAddress = filenameParts.filter(part => 
+      part.length > 2 && /^[A-Za-z0-9]+$/.test(part)
+    ).slice(0, 3).join(' ')
+    
+    if (potentialAddress.length > 5) {
+      suggestions.push(potentialAddress)
+    }
+    
+    return suggestions.slice(0, 3) // Limit to 3 suggestions
+  }
+
+  const validateVaultName = (name: string): { valid: boolean; error?: string } => {
+    if (!name.trim()) {
+      return { valid: false, error: 'Vault name is required' }
+    }
+    
+    if (name.length < 3) {
+      return { valid: false, error: 'Vault name must be at least 3 characters' }
+    }
+    
+    if (name.length > 100) {
+      return { valid: false, error: 'Vault name must be less than 100 characters' }
+    }
+    
+    // Check for common naming patterns
+    const hasNumbers = /\d/.test(name)
+    const hasLetters = /[A-Za-z]/.test(name)
+    
+    if (!hasNumbers && !hasLetters) {
+      return { valid: false, error: 'Vault name must contain letters or numbers' }
+    }
+    
+    return { valid: true }
+  }
+
+  const addCustomCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast({
+        title: "Category name required",
+        description: "Please enter a category name.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Check if category already exists
+    const allCategories = [...categories, ...customCategories]
+    const exists = allCategories.some(cat => 
+      cat.name.toLowerCase() === newCategoryName.trim().toLowerCase()
+    )
+
+    if (exists) {
+      toast({
+        title: "Category exists",
+        description: "A category with this name already exists.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const subcategories = newSubcategories
+      .split(',')
+      .map(sub => sub.trim())
+      .filter(sub => sub.length > 0)
+
+    const newCategory = {
+      id: `custom-${Date.now()}`,
+      name: newCategoryName.trim(),
+      subcategories: subcategories.length > 0 ? subcategories : ['General']
+    }
+
+    setCustomCategories(prev => [...prev, newCategory])
+    setNewCategoryName('')
+    setNewSubcategories('')
+    setShowCustomCategoryForm(false)
+
+    toast({
+      title: "Category added",
+      description: `"${newCategory.name}" category has been created successfully.`,
+    })
+  }
+
+  const removeCustomCategory = (categoryId: string) => {
+    setCustomCategories(prev => prev.filter(cat => cat.id !== categoryId))
+    toast({
+      title: "Category removed",
+      description: "Custom category has been removed.",
+    })
+  }
+
+  // Combine built-in and custom categories
+  const allCategories = [...categories, ...customCategories]
 
   const startEditing = (fileId: string) => {
     setEditingFile(fileId)
@@ -322,12 +519,159 @@ export default function UploadPage() {
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Upload Documents
+            Create Asset Vault & Add Documents
           </h1>
           <p className="text-slate-600">
-            Securely add documents to your vault with intelligent categorization and parsing
+            Create organized vaults for your assets and securely store all related documents
           </p>
         </div>
+
+        {/* Asset Vault Creation Section - Show First */}
+        {showAssetNaming && (
+          <Card className="mb-6 border-2 border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-blue-900">
+                <Tag className="h-5 w-5" />
+                <span>Step 1: Create Your Asset Vault</span>
+              </CardTitle>
+              <CardDescription className="text-blue-700">
+                Start by creating a vault for your asset. This vault will organize all related documents automatically.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium text-blue-900">Vault Name</Label>
+                <Input
+                  value={assetName}
+                  onChange={(e) => setAssetName(e.target.value)}
+                  placeholder="e.g., 281 Loraine Road - Memphis Property, Tesla Model 3, John's 401k Portfolio"
+                  className="h-10 text-sm border-blue-300"
+                />
+                <p className="text-xs text-blue-600 mt-1">
+                  This creates a vault to organize all related documents. Think of it as a digital folder for your asset.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-blue-900">Category</Label>
+                  <Select value={assetCategory} onValueChange={setAssetCategory}>
+                    <SelectTrigger className="h-10 text-sm border-blue-300">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label className="text-sm font-medium text-blue-900">Subcategory</Label>
+                  <Select 
+                    value={assetSubcategory} 
+                    onValueChange={setAssetSubcategory}
+                    disabled={!assetCategory}
+                  >
+                    <SelectTrigger className="h-10 text-sm border-blue-300">
+                      <SelectValue placeholder="Select subcategory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {assetCategory && categories.find(c => c.id === assetCategory)?.subcategories.map((sub) => (
+                        <SelectItem key={sub} value={sub}>
+                          {sub}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {suggestedAssetNames.length > 0 && (
+                <div>
+                  <Label className="text-xs font-medium text-blue-700">Suggested Names:</Label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {suggestedAssetNames.map((suggestion, index) => (
+                      <Button
+                        key={index}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setAssetName(suggestion)}
+                        className="h-7 text-xs px-3 border-blue-300 text-blue-700 hover:bg-blue-100"
+                      >
+                        {suggestion}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex space-x-3">
+                                  <Button
+                    onClick={() => {
+                      if (validateVaultName(assetName).valid && assetCategory && assetSubcategory) {
+                        setShowAssetNaming(false)
+                        toast({
+                          title: "Asset vault created",
+                          description: `"${assetName}" vault is ready for your documents.`,
+                        })
+                      } else {
+                        toast({
+                          title: "Missing information",
+                          description: "Please provide vault name, category, and subcategory.",
+                          variant: "destructive",
+                        })
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Create Vault & Add Documents
+                  </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setShowAssetNaming(false)}
+                  className="text-blue-600 hover:bg-blue-100"
+                >
+                  Skip for Now
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Document Upload Section - Only show after asset is named */}
+        {!showAssetNaming && assetName && (
+          <Card className="mb-6 border-2 border-green-200 bg-green-50">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-green-900">
+                <FileText className="h-5 w-5" />
+                <span>Step 2: Add Paperwork to "{assetName}"</span>
+              </CardTitle>
+              <CardDescription className="text-green-700">
+                Now add documents that belong to this asset vault. All documents will automatically be organized under "{assetName}" in the {categories.find(c => c.id === assetCategory)?.name} {'>'}{' '}{assetSubcategory} category.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4 p-3 bg-green-100 rounded-lg">
+                <div className="text-sm text-green-800">
+                  <strong>Asset Vault:</strong> {assetName} 
+                  <br />
+                  <strong>Category:</strong> {categories.find(c => c.id === assetCategory)?.name} {'>'}{' '}{assetSubcategory}
+                </div>
+              </div>
+              <Button
+                onClick={() => setShowAssetNaming(true)}
+                variant="outline"
+                className="text-green-700 border-green-300 hover:bg-green-100"
+              >
+                ← Change Asset Name
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Upload Methods */}
@@ -576,6 +920,34 @@ export default function UploadPage() {
                         )}
                       </div>
 
+
+
+                      {/* Document Naming Section */}
+                      {assetName && (
+                        <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <FileText className="h-4 w-4 text-green-600" />
+                            <span className="text-xs font-medium text-green-700">Name This Document</span>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div>
+                              <Label className="text-xs text-green-700">Document Name</Label>
+                              <Input
+                                value={file.name}
+                                onChange={(e) => updateFileMetadata(file.id, 'name', e.target.value)}
+                                placeholder="e.g., Property Tax Bill 2025, Insurance Policy, Deed"
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            
+                            <div className="text-xs text-green-600">
+                              This document will be organized under: <strong>{assetName}</strong>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Category Selection */}
                       <div className="space-y-2">
                         <Select
@@ -586,7 +958,7 @@ export default function UploadPage() {
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories.map((category) => (
+                            {allCategories.map((category) => (
                               <SelectItem key={category.id} value={category.name}>
                                 {category.name}
                               </SelectItem>
@@ -675,6 +1047,31 @@ export default function UploadPage() {
                         </div>
                       )}
 
+                      {/* Asset Organization Info */}
+                      {assetName && (
+                        <div className="mt-2 p-2 bg-slate-50 border border-slate-200 rounded">
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-slate-600">
+                              <span className="font-medium">Asset:</span> {assetName}
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                // TODO: Navigate to asset view or show asset documents
+                                toast({
+                                  title: "Asset Management",
+                                  description: `View all documents for ${assetName}`,
+                                })
+                              }}
+                              className="h-6 text-xs px-2"
+                            >
+                              View Asset
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Error Display */}
                       {file.error && (
                         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
@@ -684,6 +1081,30 @@ export default function UploadPage() {
                     </div>
                   ))}
                 </div>
+                
+                {/* Submit Button */}
+                {uploadedFiles.length > 0 && (
+                  <div className="pt-4 border-t border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm text-slate-600">
+                        {uploadedFiles.filter(f => f.status === 'completed').length} of {uploadedFiles.length} files ready
+                      </div>
+                      <Button
+                        onClick={handleSubmitAll}
+                        disabled={uploadedFiles.some(f => f.status !== 'completed')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Submit All Files
+                      </Button>
+                    </div>
+                    {uploadedFiles.some(f => f.status !== 'completed') && (
+                      <div className="text-xs text-slate-500 mt-2">
+                        Waiting for all files to complete processing...
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -728,6 +1149,74 @@ export default function UploadPage() {
                       Extract text and data from documents
                     </Label>
                   </div>
+                </div>
+
+                {/* Custom Categories */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-sm font-medium">Custom Categories</Label>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowCustomCategoryForm(!showCustomCategoryForm)}
+                    >
+                      {showCustomCategoryForm ? 'Cancel' : 'Add Category'}
+                    </Button>
+                  </div>
+
+                  {showCustomCategoryForm && (
+                    <div className="space-y-3 p-3 bg-slate-50 rounded border">
+                      <div>
+                        <Label className="text-xs font-medium">Category Name</Label>
+                        <Input
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          placeholder="e.g., Hobbies, Collections, Travel"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs font-medium">Subcategories (comma-separated)</Label>
+                        <Input
+                          value={newSubcategories}
+                          onChange={(e) => setNewSubcategories(e.target.value)}
+                          placeholder="e.g., Photography, Gardening, Cooking"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={addCustomCategory}
+                        className="w-full"
+                      >
+                        Create Category
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Display Custom Categories */}
+                  {customCategories.length > 0 && (
+                    <div className="space-y-2">
+                      {customCategories.map((category) => (
+                        <div key={category.id} className="flex items-center justify-between p-2 bg-slate-100 rounded">
+                          <div>
+                            <div className="text-sm font-medium">{category.name}</div>
+                            <div className="text-xs text-slate-600">
+                              {category.subcategories.join(', ')}
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeCustomCategory(category.id)}
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
