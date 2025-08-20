@@ -299,21 +299,29 @@ export class DocumentParser {
       // For now, we'll use a simple approach
       // In production, you'd want to use a proper PDF parsing library
       const arrayBuffer = await file.arrayBuffer()
-      const pdfjsLib = await import('pdfjs-dist')
       
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-      let fullText = ''
-      
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i)
-        const textContent = await page.getTextContent()
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(' ')
-        fullText += pageText + '\n'
+      // Try to use PDF.js if available
+      try {
+        const pdfjsLib = await import('pdfjs-dist')
+        
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+        let fullText = ''
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i)
+          const textContent = await page.getTextContent()
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ')
+          fullText += pageText + '\n'
+        }
+        
+        return fullText
+      } catch (pdfError) {
+        console.warn('PDF.js not available, using fallback:', pdfError)
+        // Fallback: return filename as text for now
+        return file.name
       }
-      
-      return fullText
     } catch (error) {
       console.warn('PDF parsing failed, falling back to basic extraction:', error)
       // Fallback: return filename as text for now
@@ -328,27 +336,32 @@ export class DocumentParser {
     try {
       console.log('Starting OCR processing for image:', file.name)
       
-      // Import Tesseract.js dynamically
-      const { createWorker } = await import('tesseract.js')
-      
-      // Create a worker for OCR processing
-      const worker = await createWorker('eng', 1, {
-        logger: m => console.log('OCR Progress:', m)
-      })
-      
-      // Convert file to base64 for Tesseract
-      const arrayBuffer = await file.arrayBuffer()
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-      const dataUrl = `data:${file.type};base64,${base64}`
-      
-      // Perform OCR
-      const { data: { text } } = await worker.recognize(dataUrl)
-      
-      // Terminate worker to free memory
-      await worker.terminate()
-      
-      console.log('OCR completed, extracted text length:', text.length)
-      return text || file.name
+      // Try to import Tesseract.js dynamically
+      try {
+        const { createWorker } = await import('tesseract.js')
+        
+        // Create a worker for OCR processing
+        const worker = await createWorker('eng', 1, {
+          logger: m => console.log('OCR Progress:', m)
+        })
+        
+        // Convert file to base64 for Tesseract
+        const arrayBuffer = await file.arrayBuffer()
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+        const dataUrl = `data:${file.type};base64,${base64}`
+        
+        // Perform OCR
+        const { data: { text } } = await worker.recognize(dataUrl)
+        
+        // Terminate worker to free memory
+        await worker.terminate()
+        
+        console.log('OCR completed, extracted text length:', text.length)
+        return text || file.name
+      } catch (tesseractError) {
+        console.warn('Tesseract.js not available, using fallback:', tesseractError)
+        return file.name
+      }
     } catch (error) {
       console.warn('Image OCR failed:', error)
       return file.name
@@ -362,17 +375,22 @@ export class DocumentParser {
     try {
       console.log('Starting Word document processing:', file.name)
       
-      // Import mammoth.js dynamically
-      const mammoth = await import('mammoth')
-      
-      // Convert file to array buffer
-      const arrayBuffer = await file.arrayBuffer()
-      
-      // Extract text from Word document
-      const result = await mammoth.extractRawText({ arrayBuffer })
-      
-      console.log('Word document processing completed, extracted text length:', result.value.length)
-      return result.value || file.name
+      // Try to import mammoth.js dynamically
+      try {
+        const mammoth = await import('mammoth')
+        
+        // Convert file to array buffer
+        const arrayBuffer = await file.arrayBuffer()
+        
+        // Extract text from Word document
+        const result = await mammoth.extractRawText({ arrayBuffer })
+        
+        console.log('Word document processing completed, extracted text length:', result.value.length)
+        return result.value || file.name
+      } catch (mammothError) {
+        console.warn('Mammoth.js not available, using fallback:', mammothError)
+        return file.name
+      }
     } catch (error) {
       console.warn('Word document parsing failed:', error)
       return file.name
@@ -386,27 +404,32 @@ export class DocumentParser {
     try {
       console.log('Starting Excel document processing:', file.name)
       
-      // Import xlsx dynamically
-      const XLSX = await import('xlsx')
-      
-      // Convert file to array buffer
-      const arrayBuffer = await file.arrayBuffer()
-      
-      // Read the Excel file
-      const workbook = XLSX.read(arrayBuffer, { type: 'array' })
-      
-      let fullText = ''
-      
-      // Process each sheet
-      workbook.SheetNames.forEach(sheetName => {
-        const sheet = workbook.Sheets[sheetName]
-        const sheetText = XLSX.utils.sheet_to_txt(sheet)
+      // Try to import xlsx dynamically
+      try {
+        const XLSX = await import('xlsx')
         
-        fullText += `Sheet: ${sheetName}\n${sheetText}\n\n`
-      })
-      
-      console.log('Excel processing completed, extracted text length:', fullText.length)
-      return fullText || file.name
+        // Convert file to array buffer
+        const arrayBuffer = await file.arrayBuffer()
+        
+        // Read the Excel file
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+        
+        let fullText = ''
+        
+        // Process each sheet
+        workbook.SheetNames.forEach(sheetName => {
+          const sheet = workbook.Sheets[sheetName]
+          const sheetText = XLSX.utils.sheet_to_txt(sheet)
+          
+          fullText += `Sheet: ${sheetName}\n${sheetText}\n\n`
+        })
+        
+        console.log('Excel processing completed, extracted text length:', fullText.length)
+        return fullText || file.name
+      } catch (xlsxError) {
+        console.warn('XLSX not available, using fallback:', xlsxError)
+        return file.name
+      }
     } catch (error) {
       console.warn('Excel parsing failed:', error)
       return file.name

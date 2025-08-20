@@ -9,6 +9,7 @@ import { Logo } from "@/components/logo"
 import { Navigation } from "@/components/navigation"
 import { useMockAuth } from "@/lib/auth-context"
 import { createClient } from '@supabase/supabase-js'
+import { InsightsService } from "@/lib/insights-service"
 import { 
   Home,
   FileText,
@@ -25,7 +26,9 @@ import {
   Plus,
   Eye,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Calendar,
+  CheckCircle
 } from "lucide-react"
 
 export default function DashboardPage() {
@@ -36,7 +39,15 @@ export default function DashboardPage() {
     recentDocuments: [] as any[],
     insights: [] as any[],
     totalDocuments: 0,
-    totalValue: 0
+    totalValue: 0,
+    insightsSummary: {
+      total: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      upcomingDeadlines: 0,
+      expiringDocuments: 0
+    }
   })
   const router = useRouter()
   const { user } = useMockAuth()
@@ -125,43 +136,54 @@ export default function DashboardPage() {
           status: 'analyzed'
         }))
 
-      // Get insights from document_insights
-      const { data: insights, error: insightError } = await supabase
-        .from('document_insights')
-        .select('insights, created_at')
-        .eq('user_id', user.id)
-        .limit(10)
-
-      let processedInsights: any[] = []
-      if (!insightError && insights) {
-        processedInsights = insights
-          .filter(insight => insight.insights && insight.insights.length > 0)
-          .flatMap(insight => insight.insights)
-          .slice(0, 5)
-          .map((insight, index) => ({
-            id: index + 1,
-            title: insight.title || 'Document Insight',
-            description: insight.description || 'Important information found',
-            category: 'Documents',
-            priority: 'medium',
-            action: insight.action || 'Review document'
-          }))
+      // Get real insights from the insights service
+      let insightsData: any[] = []
+      let insightsSummary = {
+        total: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        upcomingDeadlines: 0,
+        expiringDocuments: 0
+      }
+      
+      try {
+        const insights = await InsightsService.getUserInsights(user.id)
+        const summary = await InsightsService.getInsightsSummary(user.id)
+        
+        insightsData = insights.slice(0, 5).map((insight, index) => ({
+          id: index + 1,
+          title: insight.title,
+          description: insight.description,
+          category: insight.category,
+          priority: insight.priority,
+          action: insight.action || 'Review document',
+          dueDate: insight.dueDate,
+          amount: insight.amount
+        }))
+        
+        insightsSummary = summary
+      } catch (insightError) {
+        console.warn('Failed to load insights:', insightError)
+        // Fallback to empty insights
       }
 
       // Update dashboard data
       setDashboardData({
         categories: processedCategories,
         recentDocuments: recentDocs,
-        insights: processedInsights,
+        insights: insightsData,
         totalDocuments: documents.length,
-        totalValue: 0 // We'll add value calculation later
+        totalValue: 0, // We'll add value calculation later
+        insightsSummary
       })
 
       console.log('Dashboard data loaded:', {
         totalDocuments: documents.length,
         categories: processedCategories.length,
         recentDocs: recentDocs.length,
-        insights: processedInsights.length
+        insights: insightsData.length,
+        insightsSummary
       })
       
     } catch (error) {
@@ -185,6 +207,7 @@ export default function DashboardPage() {
 
   const totalValue = dashboardData.totalValue
   const totalDocuments = dashboardData.totalDocuments
+  const insightsSummary = dashboardData.insightsSummary
 
   const formatCurrency = (amount: number) => {
     if (amount === 0) return "N/A"
@@ -368,7 +391,7 @@ export default function DashboardPage() {
         {!isLoading && dashboardData.totalDocuments > 0 && (
           <>
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="border border-slate-200 shadow-sm bg-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -401,11 +424,31 @@ export default function DashboardPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 mb-2">Asset Categories</p>
-                  <p className="text-3xl font-bold text-slate-900">{dashboardData.categories.length}</p>
+                  <p className="text-sm font-medium text-slate-500 mb-2">Active Insights</p>
+                  <p className="text-3xl font-bold text-slate-900">{insightsSummary.total}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {insightsSummary.high} high priority
+                  </p>
                 </div>
-                <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center">
-                  <BarChart3 className="h-7 w-7 text-slate-700" />
+                <div className="w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center">
+                  <AlertTriangle className="h-7 w-7 text-red-700" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-slate-200 shadow-sm bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-500 mb-2">Upcoming Deadlines</p>
+                  <p className="text-3xl font-bold text-slate-900">{insightsSummary.upcomingDeadlines}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {insightsSummary.expiringDocuments} expiring soon
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-orange-100 rounded-xl flex items-center justify-center">
+                  <Calendar className="h-7 w-7 text-orange-700" />
                 </div>
               </div>
             </CardContent>
@@ -518,27 +561,37 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {dashboardData.insights.map((insight: any) => (
-                  <div key={insight.id} className="p-4 border border-slate-200 rounded-lg bg-slate-50/50 cursor-pointer hover:bg-slate-100/50 transition-colors" onClick={() => router.push(`/insights/${insight.id}`)}>
-                    <div className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                        insight.priority === 'high' ? 'bg-slate-900' : 
-                        insight.priority === 'medium' ? 'bg-slate-600' : 'bg-slate-400'
-                      }`}></div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-slate-900 mb-1">{insight.title}</h4>
-                        <p className="text-sm text-slate-600 mb-2">{insight.description}</p>
-                        <div className="flex items-center space-x-2">
-                          <Badge variant="outline" className={`text-xs ${getPriorityColor(insight.priority)}`}>
-                            {insight.priority} priority
-                          </Badge>
-                          <span className="text-xs text-slate-500">{insight.category}</span>
+                {dashboardData.insights.length > 0 ? (
+                  dashboardData.insights.map((insight: any) => (
+                    <div key={insight.id} className="p-4 border border-slate-200 rounded-lg bg-slate-50/50 cursor-pointer hover:bg-slate-100/50 transition-colors" onClick={() => router.push(`/insights`)}>
+                      <div className="flex items-start space-x-3">
+                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                          insight.priority === 'high' ? 'bg-red-500' : 
+                          insight.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                        }`}></div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-slate-900 mb-1">{insight.title}</h4>
+                          <p className="text-sm text-slate-600 mb-2">{insight.description}</p>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="outline" className={`text-xs ${getPriorityColor(insight.priority)}`}>
+                              {insight.priority} priority
+                            </Badge>
+                            <span className="text-xs text-slate-500">{insight.category}</span>
+                          </div>
+                          <p className="text-sm text-slate-700 mt-2 font-medium">{insight.action}</p>
                         </div>
-                        <p className="text-sm text-slate-700 mt-2 font-medium">{insight.action}</p>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <CheckCircle className="h-6 w-6 text-green-600" />
+                    </div>
+                    <p className="text-sm text-slate-600">No active insights</p>
+                    <p className="text-xs text-slate-500 mt-1">Upload documents to generate insights</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -556,9 +609,9 @@ export default function DashboardPage() {
               <Plus className="h-7 w-7 text-slate-700" />
               <span className="text-sm font-medium text-slate-700">Add Asset</span>
             </Button>
-            <Button variant="outline" className="h-24 flex-col space-y-3 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => handleQuickAction('reports')}>
-              <Eye className="h-7 w-7 text-slate-700" />
-              <span className="text-sm font-medium text-slate-700">View Reports</span>
+            <Button variant="outline" className="h-24 flex-col space-y-3 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => router.push('/insights')}>
+              <AlertTriangle className="h-7 w-7 text-slate-700" />
+              <span className="text-sm font-medium text-slate-700">View Insights</span>
             </Button>
             <Button variant="outline" className="h-24 flex-col space-y-3 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200" onClick={() => handleQuickAction('security')}>
               <Shield className="h-7 w-7 text-slate-700" />
